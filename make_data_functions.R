@@ -1,0 +1,243 @@
+# Author: Georgia Papadogeorgou
+# Date: 5/14/2016
+# Desc: Basic functions for load and manipulating the power plant data in order
+#       to predict heat input, aggregate to the facility level, and link with 
+#       ozone, temperature and Census.
+#
+# Update: 7/1/2016
+# I updated the functions to work for a period longer that a specific month.
+# Update: 7/29/2016
+# I no longer drop the facilities with missing or 0 operating time, we chose to
+# ignore operating time because it was well predicted by heat input and gross load.
+
+library(arepa)
+source('~/Dropbox/ARP_Code/CreateNOxControlsFunction.R')
+# We do not need sulfur content and SO2 control functions and data.
+# source('~/Dropbox/ARP_Code/CreateSO2ControlsFunction.R')
+# source('~/Dropbox/ARP_Code/CreateCoalSulfurContentCategories.R')
+
+LoadUnitLevelData <- function() {
+  # Function that loads the unit level emissions for coal or gas units.
+  #
+  # Returns:
+  #  The data frame (data.table format) with emissions and many other variables.
+  
+  # data_dir <- '~/Dropbox/ARP/Data_AMPD_EIA/'
+  data_dir <- '~/Dropbox/'
+  
+  # Read in Data that is monthly emissions data merged with other stuff
+  dat <- fread(paste0(data_dir, "AMPD_Unit_with_Sulfur_Content_and_Regulations_",
+                      "with_Facility_Attributes.csv"))
+  dat$uID = paste(dat$Facility.ID..ORISPL., dat$Unit.ID, sep = "_")
+  dat$FacID = dat$Facility.ID..ORISPL.
+  dat$Year = as.numeric(dat$Year)
+  dat$Month = as.numeric(dat$Month)
+  dat[, year_month := paste(Year, Month, sep="_")]
+  setkeyv(dat, c("uID", "Year", "Month"))
+  setorderv(dat, c("uID", "Year", "Month"))
+  dat <- unique(dat)
+  
+  # Restrict to Coal-fired or Natural Gas-fired units only
+  dat_unit = subset(dat, grepl('Coal', Fuel.Type..Primary..x) |
+                      grepl('Natural Gas', Fuel.Type..Primary..x))
+  setkeyv(dat_unit, c("uID", "Year", "Month"))
+
+  print('Unit Level Data Loading Complete.')
+  return(dat_unit)
+}
+
+
+UnitToFacility <- function(dat_unit) {
+  # Aggregating the power plant data from unit to facility, defining SO2, NOx controls.
+  #
+  # Args:
+  #  dat_unit: The power plant data at the unit level.
+  #
+  # Returns:
+  #  Data frame of the facility level data.
+  
+  ## -- Define SO2 Control Strategies at the Unit Level
+#   print('Creating SO2 control technologies variables')
+#   dat_unit <- SO2controltechnologies(dat_unit)
+#   dat_unit$AnySO2control = FALSE
+#   dat_unit$AnySO2control = (apply(dat_unit[, c("DryLimeFGD", "DrySorbInj", "DualAlk", "MagOx", 
+#                                                "SodiumBased", "WetLimeFGD", "WetLime", "OtherSO2",
+#                                                "FluidizedBed"), with = FALSE], 1, sum) >= 1)
+# 
+  ## -- Define NOx Control Strategies at the Unit Level
+  print('Creating NOx control technologies variables')
+  dat_unit = NOxcontroltechnologies(dat_unit)
+  dat_unit$NumNOxControls = 0
+  dat_unit$NumNOxControls = apply(dat_unit[, c("SCR", "SNCR", "LowNOxBurner", "OverFire",
+                                               "Ammonia", "CombustMod", "WaterInj", "OtherNOx"),
+                                           with = FALSE], 1, sum, na.rm = TRUE)
+
+  ## Group SCR and SnCR as one category
+  dat_unit$S_n_CR = apply(dat_unit[, c("SCR", "SNCR"), with = FALSE], 1, any, na.rm = TRUE)
+  
+  
+  ## -- Define Operating Capacity as the maximum number of hours per month times the
+  print('Creating Capacity related variables.')
+  # Max Hourly Heat Input Rate
+  ## maxopp is the max total number of hours operating time for each of 12 months
+  maxopp = with(dat_unit, tapply(Operating.Time, year_month, max, na.rm = TRUE))
+  ### Max.Hourly.HI.Rate..MMBtu.hr. is the heat input capacity (MMBtu/hour)
+  for (i in 1:length(maxopp))
+    dat_unit[year_month == names(maxopp)[i],
+             Capacity:= maxopp[i] * Max.Hourly.HI.Rate..MMBtu.hr.] # MMBtu/month.
+  
+  # Percent Capacity is Heat Input / Capacity
+  dat_unit$PctCapacity = dat_unit$Heat.Input..MMBtu / dat_unit$Capacity
+  with(dat_unit, mean(PctCapacity > 1.5, na.rm = TRUE)) ## No units for Aug 2014
+  dat_unit$PctCapacity[dat_unit$PctCapacity > 1.5] = NA ## > 150 % capacity
+  
+  
+  ## -- Make Facility Level Data -- ##
+  dat_unit[, Sulfur.Content := as.numeric(Sulfur.Content)]
+  
+  dat_facility = dat_unit[, list(nunits = length(unique(Unit.ID)),
+                                 pctCoal = sum(grepl('Coal', Fuel.Type..Primary..x)) / length(unique(Unit.ID)),
+                                 pctGas = sum(grepl('Natural Gas', Fuel.Type..Primary..x)) / length(unique(Unit.ID)),
+                                 pctGas_byHI = sum(grepl('Natural Gas', Fuel.Type..Primary..x) * Heat.Input..MMBtu.) /
+                                   sum(Heat.Input..MMBtu.),
+                                 nunits_withsulfur = sum(!is.na(Sulfur.Content)),
+                                 pctunits_withsulfur = sum(!is.na(Sulfur.Content)) / length(unique(Unit.ID)),
+                                 meanSulfur_narm = sum(Sulfur.Content * Heat.Input..MMBtu., na.rm = TRUE) /
+                                   sum(Heat.Input..MMBtu.[!is.na(Heat.Input..MMBtu.) & !is.na(Sulfur.Content)]),
+#                                 nSO2control = sum(AnySO2control, na.rm = TRUE),
+                                 # Scrubbed if all units have an SO2 control
+#                                 ScrubbedFacility = sum(AnySO2control, na.rm = TRUE) == length(unique(Unit.ID)),
+                                 initialYear = Initial.Year.of.Operation[1],
+                                 pctS_n_CR = sum(S_n_CR) / length(unique(Unit.ID)),
+                                 S_n_CR_byHI_narm = sum(S_n_CR * Heat.Input..MMBtu., na.rm = TRUE) /
+                                   sum(Heat.Input..MMBtu., na.rm = TRUE),
+                                 S_n_CR_byHI = sum(S_n_CR * Heat.Input..MMBtu.) /
+                                   sum(Heat.Input..MMBtu., na.rm = TRUE),
+#                                 totNumNOxControls = sum(NumNOxControls, na.rm = TRUE),
+#                                 pctWithNOxControl = sum(NumNOxControls > 0, na.rm = TRUE) / length(unique(Unit.ID)),
+#                                 totNumNOxCon_byHI_narm = sum(NumNOxControls * Heat.Input..MMBtu., na.rm = TRUE) /
+#                                   sum(Heat.Input..MMBtu., na.rm = TRUE),
+#                                 totNumNOxCon_byHI = sum(NumNOxControls * Heat.Input..MMBtu.) /
+#                                   sum(Heat.Input..MMBtu., na.rm = TRUE),
+                                 totOpTime_narm = sum(Operating.Time, na.rm = TRUE),
+                                 totOpTime = sum(Operating.Time),
+                                 totSO2emissions = sum(SO2..tons., na.rm = TRUE),
+                                 totNOxemissions = sum(NOx..tons., na.rm = TRUE),
+                                 totCO2emissions = sum(CO2..short.tons., na.rm = TRUE),
+                                 totLoad = sum(Gross.Load..MW.h., na.rm = TRUE),
+                                 totHeatInput_narm = sum(Heat.Input..MMBtu., na.rm = TRUE),
+                                 totHeatInput = sum(Heat.Input..MMBtu.),
+                                 pctCapacity = sum(Heat.Input..MMBtu.) / sum(Capacity),
+                                 pctCapacity_byHI = sum(Heat.Input..MMBtu. * PctCapacity) /
+                                   sum(Heat.Input..MMBtu., na.rm = TRUE),
+                                 Phase2 = Is.Phase2[1],
+                                 Fac.Latitude = Facility.Latitude.x[1],
+                                 Fac.Longitude = Facility.Longitude.x[1],
+                                 Fac.FIPS = FIPS[1],
+                                 nmonths = length(unique(Month))),
+                          by = "FacID"]
+  print('Aggregation completed.')
+  
+  print('Percentage of facilities with pctCapacity > 1.5, set to NA.')
+  print(with(dat_facility, mean(pctCapacity > 1.5, na.rm = TRUE))) # 0 for Aug 2014.
+  dat_facility$pctCapacity[dat_facility$pctCapacity > 1.5] = NA ## > 150% capacity
+  
+  setkeyv(dat_facility, "FacID")
+  setorderv(dat_facility, "FacID")
+
+  ##- Create Categories of Coal Sulfur Content
+#  dat_facility = CreateSulfurCategories(dat_facility, sulfurvar = dat_facility[, meanSulfur_narm])
+  
+  return(dat_facility)
+}
+
+
+
+
+LinkPPtoMonitors <- function(dat, within_km, year, month) {
+  # Function that links the power plant data of a specific month to monitoring
+  # data, after dropping facilities that were not operating.
+  #
+  # Args:
+  #  dat:          Power plant data with coordinate information.
+  #  within_km:    How many kilometers we want to perform the linkage at.
+  #  year, month:  Year and month of the time period we are interested in.
+  #
+  # Returns:
+  #  Data frame of the initial power plant data (after dropping non-operating
+  #  ones), with additional ozone, temperature and Census information.
+  
+  data_path <- '/Users/georgiapapadogeorgou/Documents/ARP/Application/'
+  
+  OzTempCensus <- NULL
+  try(load(paste0(data_path, 'Data/OzTempCen', paste(month, collapse = ''),
+                  '_', substr(as.character(year), 3, 4), '.dat'))) # OzTempCensus
+  if (is.null(OzTempCensus)) {
+    # If the file is null, it means that we have not previously linked and saved the
+    # linked dataset of Ozone, Temperature and Census. Then we do it and save it.
+    source(paste0('/Users/georgiapapadogeorgou/Documents/ARP/Application/',
+                  'Make Data Code/Code_with_Weather_Census/Link_Ozone_Weather_Census.R'))
+    OzTempCensus <- GetOzoneTempCensus(year, month)
+  }
+  
+#   # Dropping units that are not operating.
+#   print(paste(nrow(dat) - sum(dat$totOpTime > 0, na.rm = TRUE), 'facilites were dropped',
+#               '- operating time = 0 or NA.'))
+#   dat <- subset(dat, totOpTime > 0)
+  print('We no longer drop facilities with missing operating time, or operating time 0.')
+  
+  # Link the power plant data to ozone monitor data.
+  ozpp_link <- spatial_link_index(dat, "Fac.Latitude", "Fac.Longitude", "FacID",
+                                  OzTempCensus, "Latitude", "Longitude", "Monitor",
+                                  within = within_km, closest = TRUE)
+
+  print(paste('Monitors linked:', length(unique(ozpp_link$Monitor))))
+  print(paste('Power plants linked:', length(unique(ozpp_link$FacID))))
+  print(paste('Power plants dropped:', nrow(dat) - length(unique(ozpp_link$FacID))))
+  
+  
+  # Merge linkage key with Ozone data, then aggragate to the facility level.
+  
+  # Merge monthly data with the linked file  
+  OZmerge = merge(ozpp_link, OzTempCensus, by = "Monitor", all.x = TRUE)
+  
+  # Aggragate to the Facility Level
+  oz_facility = OZmerge[, list(meanOzone = mean(meanOzone, na.rm = TRUE),
+                               meanmaxOzone = mean(maxOzone, na.rm = TRUE),
+                               mean4maxOzone = mean(fourthmaxOzone, na.rm = TRUE),
+                               avgTemp = mean(avgTemp, na.rm = TRUE),
+                               mean4MaxTemp = mean(mean4MaxTemp, na.rm = TRUE),
+                               meanMaxTemp = mean(meanMaxTemp, na.rm = TRUE),
+                               TotPop = sum(TotPop, na.rm = TRUE),
+                               PctUrban = sum(PctUrban * TotPop, na.rm = TRUE) / sum(TotPop, na.rm = TRUE),
+                               PctInUAs = sum(PctInUAs * TotPop, na.rm = TRUE) / sum(TotPop, na.rm = TRUE),
+                               PctInUCs = sum(PctInUCs * TotPop, na.rm = TRUE) / sum(TotPop, na.rm = TRUE),
+                               PctRural = sum(PctRural * TotPop, na.rm = TRUE) / sum(TotPop, na.rm = TRUE),
+                               PctWhite = sum(PctWhite * TotPop, na.rm = TRUE) / sum(TotPop, na.rm = TRUE),
+                               PctBlack = sum(PctBlack * TotPop, na.rm = TRUE) / sum(TotPop, na.rm = TRUE),
+                               PctHisp = sum(PctHisp * TotPop, na.rm = TRUE) / sum(TotPop, na.rm = TRUE),
+                               PctHighSchool = mean(PctHighSchool, na.rm = TRUE),
+                               MedianHHInc = mean(MedianHHInc, na.rm = TRUE),
+                               PctPoor = mean(PctPoor, na.rm = TRUE),
+                               PctFemale = sum(PctFemale * TotPop, na.rm = TRUE) / sum(TotPop, na.rm = TRUE),
+                               TotHUs = sum(TotHUs, na.rm = TRUE),
+                               PctUrbanHUs = sum(PctUrbanHUs * TotHUs, na.rm = TRUE) / sum(TotHUs, na.rm = TRUE),
+                               PctRuralHUs = sum(PctRuralHUs * TotHUs, na.rm = TRUE) / sum(TotHUs, na.rm = TRUE),
+                               PctOccupied = sum(PctOccupied * TotHUs, na.rm = TRUE) / sum(TotHUs, na.rm = TRUE),
+                               PctMovedIn5 = mean(PctMovedIn5, na.rm = TRUE),
+                               MedianHValue = mean(MedianHValue, na.rm = TRUE),
+                               PopPerSQM = mean(PopPerSQM, na.rm = TRUE),
+                               nmonitors = length(Monitor)),
+                        by = "FacID"]
+  #565 Facilities with Ozone data
+  
+  ## Retain only those that are in both data sets (ie, no missing Ozone)
+  dat <- merge(dat, oz_facility, by = "FacID")
+  
+  return(dat)
+}
+
+
+
+
+
