@@ -22,7 +22,7 @@ source.path <- paste0('/Users/georgiapapadogeorgou/Documents/ARP/',
 source(paste0(source.path, 'estimating_functions.R'))
 source(paste0(source.path, 'DistCal_functions.R'))
 source(paste0(source.path, 'GBM_functions.R'))
-source(paste0(source.path, 'general_functions.R'))
+source(paste0(source.path, 'expit.R'))
 source(paste0(source.path, 'balance_functions.R'))
 source('Facility_level_Analysis/Data_analysis_functions.R')
 source('Facility_level_Analysis/Data_analysis_models_functions.R')
