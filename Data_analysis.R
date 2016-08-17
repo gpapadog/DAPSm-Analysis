@@ -24,7 +24,6 @@ source(paste0(source.path, 'DistCal_functions.R'))
 source(paste0(source.path, 'GBM_functions.R'))
 source(paste0(source.path, 'general_functions.R'))
 source(paste0(source.path, 'balance_functions.R'))
-source("~/Documents/ARP/Application/matching_plot_functions.R")
 source('Facility_level_Analysis/Data_analysis_functions.R')
 source('Facility_level_Analysis/Data_analysis_models_functions.R')
 
