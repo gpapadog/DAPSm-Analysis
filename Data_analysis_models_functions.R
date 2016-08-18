@@ -21,7 +21,7 @@ GetBalancePlots <- function(subdta, matched_ind) {
 }
 
 NaiveModel <- function(subdta, trt.col, out.col, caliper, coord.cols,
-                       subsampling = FALSE, subsamples = NULL, cols.balance) {
+                       cols.balance) {
   
   r <- NULL
 
@@ -41,34 +41,13 @@ NaiveModel <- function(subdta, trt.col, out.col, caliper, coord.cols,
                                                naive.match$pairs[, 10]))
   r$pairs <- naive.match$pairs
   
-  if (subsampling) {
-    b <- nrow(subdta) * 0.5
-    # Subsampling for standard errors of the naive.
-    match_sub <- numeric(subsamples)
-    est_sub <- numeric(subsamples)
-    for (ii in 1:subsamples) {
-      D <- subdta[sample(1:nrow(subdta), b, replace = FALSE), ]
-      naive_ps <- glm(as.formula(paste('SnCR ~ . - Fac.Latitude - Fac.Longitude - ',
-                                       out_name)), data = D, family = 'binomial')
-      D[, prop.scores := fitted(naive_ps)]
-      naive.match <- PSmatchEst(D, trt.col = trt.col, out.col = out.col,
-                                SEreturn = TRUE, caliper = caliper,
-                                replace = FALSE, estimand = 'ATT',
-                                pairsRet = TRUE, coord.cols = coord.cols)
-      est_sub[ii] <- naive.match$est
-      match_sub[ii] <- nrow(naive.match$pairs) * 2
-    }
-    se_naive <- sqrt(mean(match_sub) / r$num_match) * sd(est_sub)
-    r$result_corSE <- r$result[2] + se_naive * 1.96 * c(-1, 0, 1)
-  }
   return(r)
 }
 
 
 
 GBMmodel <- function(subdta, trt.col, out.col, caliper, coord.cols,
-                     subsampling = FALSE, subsamples = NULL, cols.balance,
-                     interaction.depth = 3, seed = 1234) {
+                     cols.balance, interaction.depth = 3, seed = 1234) {
 
   r <- NULL
   set.seed(seed)
@@ -89,36 +68,18 @@ GBMmodel <- function(subdta, trt.col, out.col, caliper, coord.cols,
                                                GBM.match$pairs[, 10]))
   r$pairs <- GBM.match$pairs
   
-  if (subsampling) {
-    b <- nrow(subdta) * 0.5
-    # Subsampling for GBM:
-    # Subsampling for standard errors of the naive.
-    match_sub <- numeric(subsamples)
-    est_sub <- numeric(subsamples)
-    for (ii in 1:subsamples) {
-      D <- subdta[sample(1:nrow(subdta), b, replace = FALSE), ]
-      gbm.ps <- GBMPropScores(D, trt.col = trt.col, ignore.cols =
-                                c(out.col, which(names(subdta) == 'prop.scores')))
-      GBM.match <- PSmatchEst(D, pscores = gbm.ps, trt.col = trt.col,
-                              out.col = out.col, SEreturn = TRUE, caliper = caliper,
-                              estimand = 'ATT', pairsRet = TRUE, coord.cols = coord.cols)
-      est_sub[ii] <- GBM.match$est
-      match_sub[ii] <- nrow(GBM.match$pairs) * 2
-    }
-    se_naive <- sqrt(mean(match_sub) / r$num_match) * sd(est_sub)
-    r$result_corSE <- r$result[2] + se_naive * 1.96 * c(-1, 0, 1)
-  }
   return(r)
 }
 
 
 DistCalModel <- function(subdta, caliper, dist.caliper, coord.cols, ignore.cols,
-                         trt.col, out.col, subsampling = FALSE, subsamples = NULL,
-                         cols.balance, coord_dist = TRUE) {
+                         trt.col, out.col, cols.balance, coord_dist = TRUE) {
 
   r <- NULL
-  cal.match <- CaliperEst(dataset = subdta, ps.caliper = caliper, dist.caliper = dist.caliper,
-                          coords.columns = coord.cols, ignore.cols = ignore.cols.coords,
+  cal.match <- CaliperEst(dataset = subdta, ps.caliper = caliper,
+                          dist.caliper = dist.caliper,
+                          coords.columns = coord.cols,
+                          ignore.cols = ignore.cols.coords,
                           SEreturn = TRUE, pairsRet = TRUE, trt.col = trt.col,
                           out.col = out.col, coord_dist = coord_dist)
   r$result <- cal.match$est[1] + 1.96 * c(-1, 0, 1) * cal.match$SE[1]
@@ -132,31 +93,13 @@ DistCalModel <- function(subdta, caliper, dist.caliper, coord.cols, ignore.cols,
                                                cal.match$pairs[, 10]))
   r$pairs <- cal.match$pairs
   
-  if (subsampling) {
-    b <- nrow(subdta) * 0.5
-    # Subsampling for matching in distance caliper.
-    match_sub <- numeric(subsamples)
-    est_sub <- numeric(subsamples)
-    for (ii in 1:subsamples) {
-      D <- subdta[sample(1:nrow(subdta), b, replace = FALSE), ]
-      cal.match <- CaliperEst(dataset = D, ps.caliper = caliper, dist.caliper = dist.caliper,
-                              coords.columns = coord.cols, ignore.cols = ignore.cols.coords,
-                              SEreturn = TRUE, pairsRet = TRUE, trt.col = trt.col,
-                              out.col = out.col, coord_dist = coord_dist)
-      est_sub[ii] <- cal.match$est[1]
-      match_sub[ii] <- nrow(cal.match$pairs) * 2
-    }
-    se_naive <- sqrt(mean(match_sub) / r$num_match) * sd(est_sub)
-    r$result_corSE <- r$result[2] + se_naive * 1.96 * c(-1, 0, 1)
-  }
   return(r)
 }
 
 
 
 DAPSoptModel <- function(subdta, trt.col, out.col, coord.cols,
-                         caliper, cols.balance, cutoff, subsampling = FALSE,
-                         subsamples = NULL, coord_dist = TRUE) {
+                         caliper, cols.balance, cutoff, coord_dist = TRUE) {
 
   r <- NULL
   out_name <- names(subdta)[out.col]
@@ -180,26 +123,6 @@ DAPSoptModel <- function(subdta, trt.col, out.col, coord.cols,
                                                DAPS.match$pairs[, 10]))
   r$pairs <- DAPS.match$pairs
   
-  if (subsampling) {
-    b <- nrow(subdta) * 0.5
-    # Subsampling for DAPS with optimal weight.
-    match_sub <- numeric(subsamples)
-    est_sub <- numeric(subsamples)
-    for (ii in 1:subsamples) {
-      if (ii %% 50 == 0) print(ii)
-      D <- subdta[sample(1:nrow(subdta), b, replace = FALSE), ]
-      DAPS.match <- DAPSest(D, out.col = out.col, trt.col = trt.col,
-                            weight = 'optimal',
-                            coords.columns = coord.cols, caliper = caliper,
-                            cov.cols = cols.balance, w_tol = 0.01, caliper_type = 'DAPS',
-                            cutoff = cutoff, pairsRet = TRUE, quiet = TRUE,
-                            coord_dist = coord_dist)
-      est_sub[ii] <- DAPS.match$est
-      match_sub[ii] <- nrow(DAPS.match$pairs) * 2
-    }
-    se_naive <- sqrt(mean(match_sub) / r$num_match) * sd(est_sub)
-    r$result_corSE <- r$result[2] + se_naive * 1.96 * c(-1, 0, 1)
-  }
   return(r)
 }
 
