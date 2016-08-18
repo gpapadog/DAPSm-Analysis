@@ -200,6 +200,14 @@ DAPS.match.opt$weight
 DAPS.match.choice$weight
 
 
+# Plotting maps of the matched pairs
+MatchedDataMap(naive.match$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
+               plot.title = 'Naive pairs')
+MatchedDataMap(cal.match$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
+               plot.title = 'Distance Caliper pairs')
+MatchedDataMap(DAPS.match.choice$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
+               plot.title = 'DAPSm pairs')
+
 # Getting causal effect estimate for different weight.
 CEweight <- DAPSWeightCE(subdta, weights, w_bal$pairs, out.col = out.col,
                          chosen_w = DAPS.match.choice$weight)
