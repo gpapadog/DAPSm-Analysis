@@ -9,14 +9,7 @@
 #              weighted by heat input.
 #              3) Link with the ozone, census and temperature data.
 
-library(data.table)
-library(stringr)
-
 time_pred <- paste0(year, '_', month)
-
-setwd('/Users/georgiapapadogeorgou/Documents/ARP/Application/')
-source('Make Data Code/make_data_functions.R')
-source('Make Data Code/Predict_variable_code/predict_variable_functions.R')
 
 
 # ---- STEP 1: Predicting heat input for unit level data.
