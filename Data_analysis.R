@@ -1,8 +1,7 @@
 # Author: Georgia Papadogeorgou
 # Date: 5/15/2016
 # Desc: Using the facility level data, we fit the models and perform the analysis
-#       using the naive, and the spatial propensity score matching methods. I also
-#       perform an analysis for the choice of w for DAPS.
+#       using the naive, and the spatial propensity score matching methods.
 
 # Loading libraries.
 library(data.table)
@@ -12,60 +11,67 @@ library(Matching)
 library(fields)
 library(ggplot2)
 library(DAPSm)
+library(stringr)
+library(arepa)
 
-setwd("/Users/georgiapapadogeorgou//Documents/ARP/Application")
+source('~/Github/DAPSm-Analysis/config.R')
 
-# Sourcing in functions.
-# Sourcing the functions that I will be using
-source.path <- paste0('/Users/georgiapapadogeorgou/Documents/ARP/',
-                      'DAPS_Simulations/functions/')
+# Setting the working directory.
+setwd(wd)
+
+# Sourcing the functions that I will be using.
 source(paste0(source.path, 'estimating_functions.R'))
 source(paste0(source.path, 'DistCal_functions.R'))
 source(paste0(source.path, 'GBM_functions.R'))
 source(paste0(source.path, 'expit.R'))
 source(paste0(source.path, 'balance_functions.R'))
-source('Facility_level_Analysis/Data_analysis_functions.R')
-source('Facility_level_Analysis/Data_analysis_models_functions.R')
+source(paste0(source.path, 'Data_analysis_functions.R'))
+source(paste0(source.path, 'Data_analysis_models_functions.R'))
+source(paste0(source.path, 'make_data_functions.R'))
+source(paste0(source.path, 'predict_variable_functions.R'))
+source(paste0(source.path, 'CreateNOxControlsFunction.R'))
+source(paste0(source.path, 'PredictHeatInput.R'))
+source(paste0(source.path, 'Link_Ozone_Weather_Census.R'))
 
-# ---- 1. Loading and forming the data.
+
+# ------------------- PART 1------------------- #
+# ------ CREATING THE ANALYSIS DATA SET ------ #
 
 
-# If we want to do this for different time period, we need to change time_use in the
-# predict_aggregate_link.R file, for time periods used for prediction of heat input.
-#year <- 2005
-month <- 6:8
-within_km <- 100
-#time_use <- list('2004', '2003', '2006', '2007')
+# ---- STEP 1. Loading unit level data and predicting heat input.
+dat_unit <- LoadUnitLevelData(data_dir)
+subdta <- PredictHeatInput(dat_unit, year, month, time_use)
 
-# year <- 2014
-# time_use <- list('2013', '2012', '2011', '2010')
 
-year <- 2004
-time_use <- list('2003', '2002', '2005', '2006')
+# ---- STEP 2: Aggregate to the facility level.
+dat_facility <- UnitToFacility(dat_unit = subdta)
 
-# Sourcing the code the loads unit level data, predicts unit heat input for units with
-# missing heat input information, aggregates unit level data to facility level, and links
-# with monitoring data.
-source('Make Data Code/predict_aggregate_link.R')
+# Dropping facilities that did not operate.
+print(paste('Dropping', sum(dat_facility$totHeatInput == 0, na.rm = TRUE),
+            'facilities for heat input = 0'))
+dat_facility <- subset(dat_facility, totHeatInput > 0 | is.na(totHeatInput))
+
+
+
+# ---- STEP 3: Linking the aggregated data to ozone monitors.
+# To run the next command you need to run the script that links ozone, temperature
+# and Census information.
+dat <- LinkPPtoMonitors(dat_facility, within_km, year, month, OzTempCensus)
+
+# Dropping facilities with missing data for at least one month.
+wh <- which(dat$nmonths != length(month))
+print(paste('Dropping', length(wh), 'out of', length(unique(dat$FacID)),
+            'facilities due to missing information on at least one month'))
+dat <- dat[- wh, ]
 
 analysis_dat <- CleanData(dat, plotcor = FALSE)
 analysis_dat <- ReformData(analysis_dat)
-
-# Which temperature do we want to keep:
-temp_keep <- 'mean4MaxTemp'
-temp_names <- c('avgTemp', 'mean4MaxTemp', 'meanMaxTemp')
-analysis_dat[, setdiff(temp_names, temp_keep) := NULL, with = FALSE]
-
-# for (ii in 1:ncol(subdta)) {
-#   plot(as.data.frame(subdta)[, ii], subdta$meanOzone, cex = 0.8,
-#        col = ifelse(subdta[, SnCR] == 1, 1, 12), main = colnames(subdta)[ii])
-# }
+# analysis_dat includes data on the observations we will use.
 
 
-# ------ 2. Setting up the analysis.
 
-outcome_analysis <- 'totNOxemissions'
-
+# ------------------- PART 2------------------- #
+# --------- SETTING UP THE ANALYSIS --------- #
 outcome_names <- c('meanOzone', 'meanmaxOzone', 'mean4maxOzone', 'totNOxemissions')
 out.col <- which(names(analysis_dat) == outcome_analysis)
 trt.col <- which(names(analysis_dat) == 'SnCR')
@@ -75,8 +81,8 @@ conf <- setdiff(1:ncol(analysis_dat), c(out.col, trt.col, coord.cols, drop_col))
 subdta <- analysis_dat[, unique(c(trt.col, out.col, coord.cols, conf)), with = FALSE]
 
 
-# ----- 3. Analysis.
-
+# ------------------- PART 3 ------------------- #
+# --------- PERFORMING THE ANALYSIS --------- #
 
 # ---  3a. Initializing the analysis.
 
@@ -84,11 +90,6 @@ set.seed(1234)
 
 trt.col <- 1
 out.col <- 2
-caliper <- 1
-cutoff <- 0.15
-subsampling <- FALSE
-subsamples <- 200
-weights <- seq(0, 1, length.out = 40)
 coord.cols <- c(4, 3)
 
 # Dropping missing data
@@ -103,8 +104,6 @@ result <- array(NA, dim = c(5, 3))
 dimnames(result) <- list(methods = c('Naive', 'GBM', 'Distance Caliper',
                                      'DAPS optimal','DAPS choice'),
                          statistic = c('LB', 'Estimate', 'UB'))
-result_corSE <- result # Saving the results with SEs calculated by subsampling.
-rownames(result_corSE) <- paste0(rownames(result_corSE), '-CorSE')
 
 num_match <- numeric(5)
 names(num_match) <- dimnames(result)[[1]]
@@ -127,7 +126,6 @@ bal <- array(NA, dim = c(6, length(cols.balance)),
 
 # Fitting the naive.
 naive.match <- NaiveModel(subdta, trt.col, out.col, caliper, coord.cols,
-                          subsampling = subsampling, subsamples = subsamples,
                           cols.balance = cols.balance)
 result[1, ] <- naive.match$result
 num_match[1] <- naive.match$num_match
@@ -136,7 +134,6 @@ bal[c(1, 6), ] <- naive.match$balance[c(2, 1), ]
 
 # Fitting GBM
 GBM.match <- GBMmodel(subdta, trt.col, out.col, caliper, coord.cols,
-                      subsampling = subsampling, subsamples = subsamples,
                       cols.balance = cols.balance, seed = 1234)
 result[2, ] <- GBM.match$result
 num_match[2] <- GBM.match$num_match
@@ -171,7 +168,8 @@ DAPS.match.choice <- DAPSchoiceModel(balance = w_bal$balance, cutoff = cutoff,
                                      dataset = subdta, pairs = w_bal$pairs,
                                      full_pairs = w_bal$full_pairs,
                                      distance_DAPS = w_bal$distance_DAPS,
-                                     out.col = out.col, weights = weights)
+                                     out.col = out.col, weights = weights,
+                                     trt.col = trt.col)
 result[5, ] <- DAPS.match.choice$est + c(- 1, 0, 1) * 1.96 * DAPS.match.choice$se
 num_match[5] <- DAPS.match.choice$num_match
 distance[5] <- DAPS.match.choice$distance
@@ -187,17 +185,10 @@ PlotWeightBalance(abs(w_bal$balance[, , - c(1, 2, 14, 16, 17, 18)]),
                   full_data = -5, weights, cutoff, axis_cex = 0.6,
                   mar = c(4, 4, 2, 7), inset = -0.35)
 
-if (subsampling) {
-  result_corSE[1, ] <- naive.match$result_corSE
-  result_corSE[2, ] <- GBM.match$result_corSE
-  result_corSE[3, ] <- cal.match$result_corSE
-  result_corSE[4, ] <- DAPS.match.opt$result_corSE
-  result_corSE[5, ] <- DAPS.match.choice$result_corSE
-}
 
 # Plotting the results.
-PlotResults(result, title = paste(outcome_analysis,
-                                  paste(month, collapse = ','), '/', year))
+PlotResults(result, title = paste(outcome_analysis, paste(month, collapse = ','),
+                                  '/', year))
 
 apply(bal, 1, function(x) c(sum = sum(abs(x) > cutoff),
                             mean = mean(abs(x)),
