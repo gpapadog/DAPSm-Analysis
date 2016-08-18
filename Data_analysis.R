@@ -31,7 +31,6 @@ source(paste0(source.path, 'make_data_functions.R'))
 source(paste0(source.path, 'predict_variable_functions.R'))
 source(paste0(source.path, 'CreateNOxControlsFunction.R'))
 source(paste0(source.path, 'PredictHeatInput.R'))
-source(paste0(source.path, 'Link_Ozone_Weather_Census.R'))
 
 
 # ------------------- PART 1------------------- #
