@@ -179,7 +179,7 @@ PredictVariableMonths <- function(year, month, time_use, variable, dat_unit) {
   r$predicted_num <- array(NA, dim = c(length(time_pred), length(time_use)))
   dimnames(r$predicted_num) <- list(time_pred = time_pred, time_use = time_use)
   r$r_squared <- r$predicted_num
-  col_ind <- which(names(subdta) == variable)
+  col_ind <- which(names(dat_unit) == variable)
   subdta <- as.data.frame(subset(dat_unit,  year_month %in% time_pred))
   r$data <- subdta[, col_ind]
   
