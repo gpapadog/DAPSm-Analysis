@@ -8,6 +8,8 @@
 
 CleanData <- function(dataset, plotcor = FALSE) {
   
+  dataset[, nmonths := NULL]
+  
   # Dropping data with missing heat input
   wh <- sum(is.na(dataset$totHeatInput))
   print(paste('Dropping', wh, 'facilities due to missing heat input.'))
@@ -70,18 +72,10 @@ CleanData <- function(dataset, plotcor = FALSE) {
   dataset[, S_n_CR_byHI := NULL]
   dataset[, initialYear := NULL]
   
-#   dataset[, SulfurCat := NULL]
-#   dataset[, HighScoal := NULL]
-#   dataset[, MedScoal := NULL]
-#   dataset[, LowScoal := NULL]
-#   dataset[, meanSulfur_narm := NULL]
-#   dataset[, ScrubbedFacility := NULL]
-#   dataset[, totNumNOxCon_byHI_narm := NULL]
-#   dataset[, totNumNOxControls := NULL]
-#   dataset[, nSO2control := NULL] # Same as above.
-#   dataset[, totNumNOxCon_byHI := NULL]
-#   dataset[, pctWithNOxControl := NULL]
+  dataset[, avgTemp := NULL]
+  dataset[, meanMaxTemp := NULL]
   
+  dataset[, meanSulfur_narm := NULL]
 
   dataset[, totOpTime_narm := NULL]
   # Dropping operating time since we will not use it in the analysis after all.
@@ -133,9 +127,6 @@ ReformData <- function(dataset) {
 
   # Dropping pct variables. Plotted them against mean ozone with color of SnCR.
   dataset[, PctFemale := NULL]
-#  dataset[, PctOccupied := NULL]
-#   dataset[, PctHisp := NULL]
-#   dataset[, PctBlack := NULL]
   dataset[, PctInUCs := NULL]  # Kept PctUrban instead
   dataset[, TotPop := NULL]  # log of this has cor 88% with log PopPerSQM.
   
