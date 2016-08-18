@@ -10,20 +10,11 @@
 # I no longer drop the facilities with missing or 0 operating time, we chose to
 # ignore operating time because it was well predicted by heat input and gross load.
 
-library(arepa)
-source('~/Dropbox/ARP_Code/CreateNOxControlsFunction.R')
-# We do not need sulfur content and SO2 control functions and data.
-# source('~/Dropbox/ARP_Code/CreateSO2ControlsFunction.R')
-# source('~/Dropbox/ARP_Code/CreateCoalSulfurContentCategories.R')
-
-LoadUnitLevelData <- function() {
+LoadUnitLevelData <- function(data_dir = '~/Dropbox/') {
   # Function that loads the unit level emissions for coal or gas units.
   #
   # Returns:
   #  The data frame (data.table format) with emissions and many other variables.
-  
-  # data_dir <- '~/Dropbox/ARP/Data_AMPD_EIA/'
-  data_dir <- '~/Dropbox/'
   
   # Read in Data that is monthly emissions data merged with other stuff
   dat <- fread(paste0(data_dir, "AMPD_Unit_with_Sulfur_Content_and_Regulations_",
@@ -56,14 +47,6 @@ UnitToFacility <- function(dat_unit) {
   # Returns:
   #  Data frame of the facility level data.
   
-  ## -- Define SO2 Control Strategies at the Unit Level
-#   print('Creating SO2 control technologies variables')
-#   dat_unit <- SO2controltechnologies(dat_unit)
-#   dat_unit$AnySO2control = FALSE
-#   dat_unit$AnySO2control = (apply(dat_unit[, c("DryLimeFGD", "DrySorbInj", "DualAlk", "MagOx", 
-#                                                "SodiumBased", "WetLimeFGD", "WetLime", "OtherSO2",
-#                                                "FluidizedBed"), with = FALSE], 1, sum) >= 1)
-# 
   ## -- Define NOx Control Strategies at the Unit Level
   print('Creating NOx control technologies variables')
   dat_unit = NOxcontroltechnologies(dat_unit)
@@ -104,21 +87,12 @@ UnitToFacility <- function(dat_unit) {
                                  pctunits_withsulfur = sum(!is.na(Sulfur.Content)) / length(unique(Unit.ID)),
                                  meanSulfur_narm = sum(Sulfur.Content * Heat.Input..MMBtu., na.rm = TRUE) /
                                    sum(Heat.Input..MMBtu.[!is.na(Heat.Input..MMBtu.) & !is.na(Sulfur.Content)]),
-#                                 nSO2control = sum(AnySO2control, na.rm = TRUE),
-                                 # Scrubbed if all units have an SO2 control
-#                                 ScrubbedFacility = sum(AnySO2control, na.rm = TRUE) == length(unique(Unit.ID)),
                                  initialYear = Initial.Year.of.Operation[1],
                                  pctS_n_CR = sum(S_n_CR) / length(unique(Unit.ID)),
                                  S_n_CR_byHI_narm = sum(S_n_CR * Heat.Input..MMBtu., na.rm = TRUE) /
                                    sum(Heat.Input..MMBtu., na.rm = TRUE),
                                  S_n_CR_byHI = sum(S_n_CR * Heat.Input..MMBtu.) /
                                    sum(Heat.Input..MMBtu., na.rm = TRUE),
-#                                 totNumNOxControls = sum(NumNOxControls, na.rm = TRUE),
-#                                 pctWithNOxControl = sum(NumNOxControls > 0, na.rm = TRUE) / length(unique(Unit.ID)),
-#                                 totNumNOxCon_byHI_narm = sum(NumNOxControls * Heat.Input..MMBtu., na.rm = TRUE) /
-#                                   sum(Heat.Input..MMBtu., na.rm = TRUE),
-#                                 totNumNOxCon_byHI = sum(NumNOxControls * Heat.Input..MMBtu.) /
-#                                   sum(Heat.Input..MMBtu., na.rm = TRUE),
                                  totOpTime_narm = sum(Operating.Time, na.rm = TRUE),
                                  totOpTime = sum(Operating.Time),
                                  totSO2emissions = sum(SO2..tons., na.rm = TRUE),
@@ -145,16 +119,13 @@ UnitToFacility <- function(dat_unit) {
   setkeyv(dat_facility, "FacID")
   setorderv(dat_facility, "FacID")
 
-  ##- Create Categories of Coal Sulfur Content
-#  dat_facility = CreateSulfurCategories(dat_facility, sulfurvar = dat_facility[, meanSulfur_narm])
-  
   return(dat_facility)
 }
 
 
 
 
-LinkPPtoMonitors <- function(dat, within_km, year, month) {
+LinkPPtoMonitors <- function(dat, within_km, year, month, OzTempCensus) {
   # Function that links the power plant data of a specific month to monitoring
   # data, after dropping facilities that were not operating.
   #
@@ -167,24 +138,8 @@ LinkPPtoMonitors <- function(dat, within_km, year, month) {
   #  Data frame of the initial power plant data (after dropping non-operating
   #  ones), with additional ozone, temperature and Census information.
   
-  data_path <- '/Users/georgiapapadogeorgou/Documents/ARP/Application/'
-  
-  OzTempCensus <- NULL
-  try(load(paste0(data_path, 'Data/OzTempCen', paste(month, collapse = ''),
-                  '_', substr(as.character(year), 3, 4), '.dat'))) # OzTempCensus
-  if (is.null(OzTempCensus)) {
-    # If the file is null, it means that we have not previously linked and saved the
-    # linked dataset of Ozone, Temperature and Census. Then we do it and save it.
-    source(paste0('/Users/georgiapapadogeorgou/Documents/ARP/Application/',
-                  'Make Data Code/Code_with_Weather_Census/Link_Ozone_Weather_Census.R'))
-    OzTempCensus <- GetOzoneTempCensus(year, month)
-  }
-  
-#   # Dropping units that are not operating.
-#   print(paste(nrow(dat) - sum(dat$totOpTime > 0, na.rm = TRUE), 'facilites were dropped',
-#               '- operating time = 0 or NA.'))
-#   dat <- subset(dat, totOpTime > 0)
-  print('We no longer drop facilities with missing operating time, or operating time 0.')
+
+  load(OzTempCensus) # OzTempCensus
   
   # Link the power plant data to ozone monitor data.
   ozpp_link <- spatial_link_index(dat, "Fac.Latitude", "Fac.Longitude", "FacID",
