@@ -8,9 +8,6 @@
 library(arepa)
 library(data.table)
 
-library(arepa)
-library(data.table)
-
 GetOzoneTempCensus <- function(year, month) {
   # Function that can be run to load and link ozone temperature and census data.
   # Temp-Ozone within 150 km, Census-Ozone within 6 miles
