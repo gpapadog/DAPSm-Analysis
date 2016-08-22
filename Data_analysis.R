@@ -20,11 +20,11 @@ source('~/Github/DAPSm-Analysis/config.R')
 setwd(wd)
 
 # Sourcing the functions that I will be using.
-source(paste0(source.path, 'estimating_functions.R'))
+source(paste0(source.path, 'PSmatchEst_function.R'))
 source(paste0(source.path, 'DistCal_functions.R'))
-source(paste0(source.path, 'GBM_functions.R'))
+source(paste0(source.path, 'GBMPropScores_function.R'))
 source(paste0(source.path, 'expit.R'))
-source(paste0(source.path, 'balance_functions.R'))
+source(paste0(source.path, 'StandDiff_function.R'))
 source(paste0(source.path, 'Data_analysis_functions.R'))
 source(paste0(source.path, 'Data_analysis_models_functions.R'))
 source(paste0(source.path, 'make_data_functions.R'))
@@ -99,9 +99,8 @@ if (any(wh)) {
 }
 
 # Defining the results matrix.
-result <- array(NA, dim = c(5, 3))
-dimnames(result) <- list(methods = c('Naive', 'GBM', 'Distance Caliper',
-                                     'DAPS optimal','DAPS choice'),
+result <- array(NA, dim = c(4, 3))
+dimnames(result) <- list(methods = c('Naive', 'GBM', 'Distance Caliper', 'DAPSm'),
                          statistic = c('LB', 'Estimate', 'UB'))
 
 num_match <- numeric(5)
@@ -116,9 +115,9 @@ ignore.cols.coords <- c(ignore.cols, coord.cols)
 cols.balance <- setdiff(1:dim(subdta)[2],
                         c(trt.col, out.col, ignore.cols.coords,
                           which(names(subdta) == 'prop.scores')))
-bal <- array(NA, dim = c(6, length(cols.balance)),
-             dimnames = list(method = c(dimnames(result)[[1]], 'Full-data'),
-                             variable = names(subdta)[cols.balance]))
+bal <- array(NA, dim = c(5, length(cols.balance)))
+dimnames(bal) <- list(method = c(dimnames(result)[[1]], 'Full-data'),
+                      variable = names(subdta)[cols.balance])
 
 
 # ----- 3b. Starting the analysis.
@@ -129,7 +128,7 @@ naive.match <- NaiveModel(subdta, trt.col, out.col, caliper, coord.cols,
 result[1, ] <- naive.match$result
 num_match[1] <- naive.match$num_match
 distance[1] <- naive.match$distance
-bal[c(1, 6), ] <- naive.match$balance[c(2, 1), ]
+bal[c(1, 5), ] <- naive.match$balance[c(2, 1), ]
 
 # Fitting GBM
 GBM.match <- GBMmodel(subdta, trt.col, out.col, caliper, coord.cols,
@@ -148,17 +147,7 @@ num_match[3] <- cal.match$num_match
 distance[3] <- cal.match$distance
 bal[3, ] <- cal.match$balance[2, ]
 
-
-# Fitting DAPS optimal
-DAPS.match.opt <- DAPSoptModel(subdta, trt.col, out.col, coord.cols, caliper,
-                               cols.balance, cutoff, coord_dist = TRUE)
-result[4, ] <- DAPS.match.opt$result
-num_match[4] <- DAPS.match.opt$num_match
-distance[4] <- DAPS.match.opt$distance
-bal[4, ] <- DAPS.match.opt$balance
-
-
-# Fitting DAPS choice.
+# Fitting DAPSm.
 w_bal <- CalcDAPSWeightBalance(subdta, weights, cols.balance, trt.col, out.col,
                                coords.columns = coord.cols, caliper,
                                coord_dist = TRUE)
@@ -169,10 +158,10 @@ DAPS.match.choice <- DAPSchoiceModel(balance = w_bal$balance, cutoff = cutoff,
                                      distance_DAPS = w_bal$distance_DAPS,
                                      out.col = out.col, weights = weights,
                                      trt.col = trt.col)
-result[5, ] <- DAPS.match.choice$est + c(- 1, 0, 1) * 1.96 * DAPS.match.choice$se
-num_match[5] <- DAPS.match.choice$num_match
-distance[5] <- DAPS.match.choice$distance
-bal[5, ] <- DAPS.match.choice$balance[2, ]
+result[4, ] <- DAPS.match.choice$est + c(- 1, 0, 1) * 1.96 * DAPS.match.choice$se
+num_match[4] <- DAPS.match.choice$num_match
+distance[4] <- DAPS.match.choice$distance
+bal[4, ] <- DAPS.match.choice$balance[2, ]
 
 # Plotting the standardized difference of means as a function of weight.
 PlotWeightBalance(w_bal$balance, full_data = -5, weights, cutoff, inset = -0.5)
