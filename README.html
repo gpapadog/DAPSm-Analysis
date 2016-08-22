@@ -100,7 +100,7 @@ img {
 </div>
 <div id="save-scripts-and-data-sets" class="section level3">
 <h3>Save scripts and data sets</h3>
-<p>You will need to specify the directory where all the scripts are (save all scripts in the same directory with the names used here), as well as the file paths of the two data sets.</p>
+<p>You will need to specify the directory where all the scripts are (save all scripts in the same directory with the names used here), as well as the directory where the power plant data are, and the file path of the linked ozone, temperature, Census data.</p>
 </div>
 <div id="installing-necessary-r-packages" class="section level3">
 <h3>Installing necessary R packages</h3>
@@ -114,10 +114,40 @@ img {
 devtools::install_github(&quot;gpapadog/DAPSm&quot;)</code></pre>
 <p>Other R packages are also used in the analysis, and are all available on CRAN: data.table, corrplot, MatchIt, Matching, fields, ggplot2, stringr.</p>
 </div>
+<div id="updating-the-configuration-file" class="section level3">
+<h3>Updating the configuration file</h3>
+<p>This is something that needs to be done, but should not take more than a couple minutes! In the <code>config.R</code> file, one needs to specify:</p>
+<ul>
+<li><code>wd</code>: Your working directory.</li>
+<li><code>source.path</code>: The path to the folder where all the R scripts are saved.</li>
+<li><code>data_dir</code>: The path to the folder where the power plant data are saved. File name must match the name of the file provided.</li>
+<li><code>OzTempCensus</code>: The file path where the covariate information is saved.</li>
+<li><code>outcome_analysis</code>: The name of the variable which we consider as the outcome of interest. Options are:
+<ul>
+<li><code>mean4maxOzone</code>: The average of the fourth maximum ozone concentration.</li>
+<li><code>totNOxemissions</code>: Total emissions of power plants.</li>
+</ul></li>
+</ul>
+<p>The remaining variables should not be changed if one wants to replicate the results of the paper.</p>
+<ul>
+<li><code>caliper</code>: Caliper used in matching.</li>
+<li><code>cutoff</code>: The cutoff of ASDM below which a variable is considered balanced.</li>
+<li><p><code>weights</code>: The weights over which we fit DAPSm in order to investigate the optimal w.</p></li>
+<li><code>year</code>: Can only be changed if one has linked ozone, temperature, Census data on a year other than 2004.</li>
+<li><code>month</code>: Can only be changed if one has linked ozone, temperature, Census data on months other than June, July and August 2004.</li>
+<li><code>time_use</code>: A list of the years which will be used in order to predict heat input.</li>
+<li><p><code>within_km</code>: How many kilometers is the maximum linkage of power plants to ozone monitoring sites.</p></li>
+</ul>
+</div>
 </div>
 <div id="running-the-analysis-script" class="section level2">
 <h2>Running the analysis script</h2>
 <p>The main data analysis script is named <code>Data_analysis.R</code>.</p>
+<ul>
+<li>Open <code>Data_analysis.R</code> in R/Rstudio</li>
+<li>Specify the file path where the configuration file is saved as <code>config_path</code></li>
+<li>Run the full script</li>
+</ul>
 </div>
 </div>
 
