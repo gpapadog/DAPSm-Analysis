@@ -3,6 +3,8 @@
 # Desc: Using the facility level data, we fit the models and perform the analysis
 #       using the naive, and the spatial propensity score matching methods.
 
+config_path <- '~/Github/DAPSm-Analysis/config.R'
+
 # Loading libraries.
 library(data.table)
 library(corrplot)
@@ -103,7 +105,7 @@ result <- array(NA, dim = c(4, 3))
 dimnames(result) <- list(methods = c('Naive', 'GBM', 'Distance Caliper', 'DAPSm'),
                          statistic = c('LB', 'Estimate', 'UB'))
 
-num_match <- numeric(5)
+num_match <- numeric(4)
 names(num_match) <- dimnames(result)[[1]]
 distance <- num_match
 
@@ -152,16 +154,16 @@ w_bal <- CalcDAPSWeightBalance(subdta, weights, cols.balance, trt.col, out.col,
                                coords.columns = coord.cols, caliper,
                                coord_dist = TRUE)
 
-DAPS.match.choice <- DAPSchoiceModel(balance = w_bal$balance, cutoff = cutoff,
-                                     dataset = subdta, pairs = w_bal$pairs,
-                                     full_pairs = w_bal$full_pairs,
-                                     distance_DAPS = w_bal$distance_DAPS,
-                                     out.col = out.col, weights = weights,
-                                     trt.col = trt.col)
-result[4, ] <- DAPS.match.choice$est + c(- 1, 0, 1) * 1.96 * DAPS.match.choice$se
-num_match[4] <- DAPS.match.choice$num_match
-distance[4] <- DAPS.match.choice$distance
-bal[4, ] <- DAPS.match.choice$balance[2, ]
+dapsm <- DAPSchoiceModel(balance = w_bal$balance, cutoff = cutoff,
+                         dataset = subdta, pairs = w_bal$pairs,
+                         full_pairs = w_bal$full_pairs,
+                         distance_DAPS = w_bal$distance_DAPS,
+                         out.col = out.col, weights = weights,
+                         trt.col = trt.col)
+result[4, ] <- dapsm$est + c(- 1, 0, 1) * 1.96 * dapsm$se
+num_match[4] <- dapsm$num_match
+distance[4] <- dapsm$distance
+bal[4, ] <- dapsm$balance[2, ]
 
 # Plotting the standardized difference of means as a function of weight.
 PlotWeightBalance(w_bal$balance, full_data = -5, weights, cutoff, inset = -0.5)
@@ -183,6 +185,7 @@ apply(bal, 1, function(x) c(sum = sum(abs(x) > cutoff),
                             max = max(abs(x))))
 
 num_match
+distance
 sum(subdta$SnCR)
 
 DAPS.match.opt$weight
@@ -198,8 +201,9 @@ MatchedDataMap(DAPS.match.choice$pairs, trt_coords = c(3, 4), con_coords = c(7, 
                plot.title = 'DAPSm pairs')
 
 # Getting causal effect estimate for different weight.
-CEweight <- DAPSWeightCE(subdta, weights, w_bal$pairs, out.col = out.col,
-                         chosen_w = DAPS.match.choice$weight)
+CEweight <- DAPSWeightCE(subdta, trt.col = trt.col, weights = weights,
+                         pairs = w_bal$pairs, out.col = out.col,
+                         chosen_w = dapsm$weight)
 CEweight$plot
 
 
