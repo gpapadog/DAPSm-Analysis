@@ -3,9 +3,6 @@
 # Date:        5/13/2016
 
 
-library(data.table)
-
-
 GetPredictData <- function(time_pred, time_use, variable, dat_unit) {
   # Get the data in a form that is used for predicting. Each row corresponds to
   # a unique unit, with variable information across time in the columns.
