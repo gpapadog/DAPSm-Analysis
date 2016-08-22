@@ -75,6 +75,9 @@ CleanData <- function(dataset, plotcor = FALSE) {
   dataset[, avgTemp := NULL]
   dataset[, meanMaxTemp := NULL]
   
+  dataset[, meanOzone := NULL]
+  dataset[, meanmaxOzone := NULL]
+  
   dataset[, meanSulfur_narm := NULL]
 
   dataset[, totOpTime_narm := NULL]
