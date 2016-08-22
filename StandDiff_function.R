@@ -1,8 +1,6 @@
 # Author: Georgia Papadogeorgou
 # Date: 1/6/2015
-# Description: Functions that calculate balance of variables.
-# Last Updated: 2/27/2016
-# Update: Added Mean distance.
+# Description: Function that calculates balance of variables.
 
 StandDiff <- function(dataset, trt, con, col) {
   # Function that calculates the standardized difference in means
@@ -30,25 +28,3 @@ StandDiff <- function(dataset, trt, con, col) {
   stand_diff <- stand_diff / apply(sub1, 2, sd)
   return(stand_diff)
 }
-
-MeanDistance <- function(dataset, trt, con, coords.cols){
-  # Function that calculates the mean Eucleadean distance of
-  # the coordinate columns coords.cols, for pairs in trt, con.
-  #
-  # Args:
-  #  dataset:     Includes the coordinates of the points.
-  #  trt:         Indeces of 1st subset of dataset.
-  #  con:         Indeces of 2nd subset. Equal length to trt.
-  #  coords.cols: Columns of coordinates.
-  
-  sub1 <- as.matrix(dataset[trt, coords.cols], nrow = length(trt),
-                    ncol = length(coords.cols))
-  sub2 <- as.matrix(dataset[con, coords.cols], nrow = length(con),
-                    ncol = length(coords.cols))
-  
-  distances <- (sub1 - sub2) ^ 2
-  distances <- mean(apply(distances, 1, function(x) sqrt(sum(x))))
-  return(distances)
-}
-
-

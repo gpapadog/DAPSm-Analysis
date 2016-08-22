@@ -1,52 +1,5 @@
 # Date Created: 1/18/2016
-# Description: Exactly the same as estimating_functions_new.R apart from DAPSest,
-#              which has incorporated the optimal weight.
 # Author: Georgia Papadogeorgou
-#
-# Update: Included different definition of standardized distance.
-#
-# Date 3/20/2016
-# Update: Moved FormDataset() to general_functions.R file, and CaliperEst() to
-#         DistCal_functions.R.
-#
-# Update: (7/1/2016) Changed the pairsRet part of the code to also return
-#         outcome information of matched pairs
-
-LModFit <- function(dataset, ignore.cols = NULL, out.col = NULL,
-                    trt.col = NULL, true_value = NULL) {
-  # Function that fits a linear model on all the variables whose indeces are
-  # not in ignore.cols.
-  #
-  # Args:
-  #  dataset:     Data frame including all the variables that we want to
-  #               include in the linear model.
-  #  ignore.cols: Indeces of columns that should NOT be included in the linear
-  #               model. If not specified, no columns are dropped.
-  #  out.col:     If the column name of the outcome is not 'Y', out.col should
-  #               be the index of the outcome column.
-  #  trt.col:     If treatment is not named 'X', trt.col should be set to the
-  #               index of the treatment column.
-  #  true_value:  Numeric. If provided, an indicator of whether the CI covers
-  #               the true value is returned.
-  #
-  # Returns:
-  #  A scalar including the coefficieng of treatment in the
-  #  linear model.
-  
-  dataset <- FormDataset(dataset = dataset,
-                         ignore.cols = ignore.cols,
-                         out.col = out.col, trt.col = trt.col)
-  r <- NULL
-  lmod <- lm(Y ~ X + ., data = dataset)
-  r$est <- lmod$coef[2]
-  
-  if (!is.null(true_value)) {
-    sd_est <- summary(lmod)$coef[2, 2]
-    r$cover <- (abs(true_value - r$est) < qnorm(0.975) * sd_est)
-  }
-  return(r)
-}
-
 
 PSmatchEst <- function(dataset, out.col = NULL, trt.col = NULL,
                        pscores = NULL, estimand = 'ATT',
