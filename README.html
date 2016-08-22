@@ -64,8 +64,44 @@ img {
 <div id="dapsm-analysis" class="section level1">
 <h1>DAPSm-Analysis</h1>
 <p>Code to perform data analysis for the DAPSm paper</p>
+<p>In general, repeating the data analysis requires that one would need to</p>
+<ul>
+<li>Save all scripts at the same directory</li>
+<li>Save data sets</li>
+<li>Specify the directory where the scripts and data sets are saved</li>
+<li>Run the analysis script <code>Data_analysis.R</code>.</li>
+</ul>
+<p>But first…</p>
 <div id="before-running-the-analysis" class="section level2">
 <h2>Before running the analysis</h2>
+<div id="have-all-the-pieces" class="section level3">
+<h3>Have all the pieces!</h3>
+<p>In order to run the analysis we need two data sets:</p>
+<ol style="list-style-type: decimal">
+<li>Data set on power plant characteristics available at ……</li>
+<li>Data set on ozone, temperature, and Census information measured at the ozone AQS monitoring sites, available at ……</li>
+</ol>
+<p>We further need the following R scripts:</p>
+<ol style="list-style-type: decimal">
+<li><code>config.R</code>: The file including the configuration of the analysis.</li>
+<li><code>CreateNOxControlsFunction.R</code>: Function that created the different NOx emission control indicators.</li>
+<li><code>Data_analysis_functions.R</code>: Functions that drop columns that we do not want to include in the analysis and reform others.</li>
+<li><code>Data_analysis_models_functions.R</code>: Functions that fit the various methods that are fit on the data set. Depend on other scripts.</li>
+<li><strong><code>Data_analysis.R</code></strong>: Contains the main data analysis code which loads all data sets and sources in the necessary functions.</li>
+<li><code>DistCal_functions.R</code>: Functions to fit matching in distance calipers. Sourced.</li>
+<li><code>expit.R</code>: The expit functions.</li>
+<li><code>GBMPropScores_function.R</code>: The function that is used to estimate the propensity scores using GBM.</li>
+<li><code>make_data_functions.R</code>: This file includes functions that load the unit level data, aggregate unit level to facility level, and link to ozone monitoring sites.</li>
+<li><code>predict_variable_functions.R</code>: Functions that are used when we predict heat input.</li>
+<li><code>PredictHeatInput.R</code>: Function that is called to predict heat input at the unit level data.</li>
+<li><code>PSmatchEst_function.R</code>: Function that is used to match data on a set of estimated propensity scores and return estimates of the causal effect, matched pairs, and balance.</li>
+<li><code>StandDiff_function.R</code>: Function that calculates the standardized difference of means.</li>
+</ol>
+</div>
+<div id="save-scripts-and-data-sets" class="section level3">
+<h3>Save scripts and data sets</h3>
+<p>You will need to specify the directory where all the scripts are (save all scripts in the same directory with the names used here), as well as the file paths of the two data sets.</p>
+</div>
 <div id="installing-necessary-r-packages" class="section level3">
 <h3>Installing necessary R packages</h3>
 <ul>
@@ -77,9 +113,6 @@ img {
 <pre><code>devtools::install_github(&quot;czigler/arepa&quot;)
 devtools::install_github(&quot;gpapadog/DAPSm&quot;)</code></pre>
 <p>Other R packages are also used in the analysis, and are all available on CRAN: data.table, corrplot, MatchIt, Matching, fields, ggplot2, stringr.</p>
-</div>
-<div id="linking-ozone-temperature-and-census-information" class="section level3">
-<h3>Linking ozone, temperature and Census information</h3>
 </div>
 </div>
 <div id="running-the-analysis-script" class="section level2">
