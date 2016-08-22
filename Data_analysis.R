@@ -16,7 +16,7 @@ library(DAPSm)
 library(stringr)
 library(arepa)
 
-source('~/Github/DAPSm-Analysis/config.R')
+source(config_path)
 
 # Setting the working directory.
 setwd(wd)
