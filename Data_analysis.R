@@ -17,22 +17,21 @@ library(stringr)
 library(arepa)
 
 source(config_path)
-
 # Setting the working directory.
 setwd(wd)
 
 # Sourcing the functions that I will be using.
-source(paste0(source.path, 'PSmatchEst_function.R'))
-source(paste0(source.path, 'DistCal_functions.R'))
-source(paste0(source.path, 'GBMPropScores_function.R'))
-source(paste0(source.path, 'expit.R'))
-source(paste0(source.path, 'StandDiff_function.R'))
-source(paste0(source.path, 'Data_analysis_functions.R'))
-source(paste0(source.path, 'Data_analysis_models_functions.R'))
-source(paste0(source.path, 'make_data_functions.R'))
-source(paste0(source.path, 'predict_variable_functions.R'))
-source(paste0(source.path, 'CreateNOxControlsFunction.R'))
-source(paste0(source.path, 'PredictHeatInput.R'))
+source('PSmatchEst_function.R')
+source('DistCal_functions.R')
+source('GBMPropScores_function.R')
+source('expit.R')
+source('StandDiff_function.R')
+source('Data_analysis_functions.R')
+source('Data_analysis_models_functions.R')
+source('make_data_functions.R')
+source('predict_variable_functions.R')
+source('CreateNOxControlsFunction.R')
+source('PredictHeatInput.R')
 
 
 # ------------------- PART 1------------------- #
@@ -43,7 +42,6 @@ source(paste0(source.path, 'PredictHeatInput.R'))
 dat_unit <- LoadUnitLevelData(data_dir)
 subdta <- PredictHeatInput(dat_unit, year, month, time_use)
 
-
 # ---- STEP 2: Aggregate to the facility level.
 dat_facility <- UnitToFacility(dat_unit = subdta)
 
@@ -52,12 +50,10 @@ print(paste('Dropping', sum(dat_facility$totHeatInput == 0, na.rm = TRUE),
             'facilities for heat input = 0'))
 dat_facility <- subset(dat_facility, totHeatInput > 0 | is.na(totHeatInput))
 
-
-
 # ---- STEP 3: Linking the aggregated data to ozone monitors.
 # To run the next command you need to run the script that links ozone, temperature
 # and Census information.
-dat <- LinkPPtoMonitors(dat_facility, within_km, year, month, OzTempCensus)
+dat <- LinkPPtoMonitors(dat_facility, within_km, year, month, OzTempCen = data_dir)
 
 # Dropping facilities with missing data for at least one month.
 wh <- which(dat$nmonths != length(month))
@@ -187,9 +183,7 @@ apply(bal, 1, function(x) c(sum = sum(abs(x) > cutoff),
 num_match
 distance
 sum(subdta$SnCR)
-
-DAPS.match.opt$weight
-DAPS.match.choice$weight
+dapsm$weight
 
 
 # Plotting maps of the matched pairs
@@ -200,10 +194,5 @@ MatchedDataMap(cal.match$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
 MatchedDataMap(DAPS.match.choice$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
                plot.title = 'DAPSm pairs')
 
-# Getting causal effect estimate for different weight.
-CEweight <- DAPSWeightCE(subdta, trt.col = trt.col, weights = weights,
-                         pairs = w_bal$pairs, out.col = out.col,
-                         chosen_w = dapsm$weight)
-CEweight$plot
 
 

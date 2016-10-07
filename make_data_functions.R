@@ -125,7 +125,7 @@ UnitToFacility <- function(dat_unit) {
 
 
 
-LinkPPtoMonitors <- function(dat, within_km, year, month, OzTempCensus) {
+LinkPPtoMonitors <- function(dat, within_km, year, month, OzTempCen) {
   # Function that links the power plant data of a specific month to monitoring
   # data, after dropping facilities that were not operating.
   #
@@ -133,13 +133,14 @@ LinkPPtoMonitors <- function(dat, within_km, year, month, OzTempCensus) {
   #  dat:          Power plant data with coordinate information.
   #  within_km:    How many kilometers we want to perform the linkage at.
   #  year, month:  Year and month of the time period we are interested in.
+  #  OzTempCen:    The file path where the file OzTempCen678_04.dat is saved.
   #
   # Returns:
   #  Data frame of the initial power plant data (after dropping non-operating
   #  ones), with additional ozone, temperature and Census information.
   
 
-  load(OzTempCensus) # OzTempCensus
+  load(paste0(OzTempCen, 'OzTempCen678_04.dat')) # OzTempCensus
   
   # Link the power plant data to ozone monitor data.
   ozpp_link <- spatial_link_index(dat, "Fac.Latitude", "Fac.Longitude", "FacID",

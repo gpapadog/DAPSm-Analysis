@@ -1,17 +1,14 @@
 # This is the configuration file for setting up the data analysis.
 
 wd <- "~/Github/DAPSm-Analysis/"
+# This must be the directory where all the function scripts are saved.
 
-# The folder where the scripts for performing the analysis are.
-source.path <- paste0('~/Github/DAPSm-Analysis/')
-
-# Specify the directory where the data on power plants are saved. The file must be
-# named: "AMPD_Unit_with_Sulfur_Content_and_Regulations_with_Facility_Attributes.csv".
-data_dir <- '~/Dropbox/'
-
-# The file path where the linked ozone-temperature-Census data are saved.
-OzTempCensus <- paste0('/Users/georgiapapadogeorgou/Documents/ARP/Application/',
-                       'Data/OzTempCen678_04.dat')
+# Specify the directory where the data on power plants, and covariate information are
+# are saved. The files must be named:
+# "AMPD_Unit_with_Sulfur_Content_and_Regulations_with_Facility_Attributes.csv", for
+# the power plant data, and
+# 'OzTempCen678_04.dat', for the covariate information data.
+data_dir <- '~/Dropbox/DATAverse/'
 
 # What is the outcome of interest
 outcome_analysis <- 'mean4maxOzone'
