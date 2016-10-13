@@ -64,12 +64,13 @@ dat <- dat[- wh, ]
 analysis_dat <- CleanData(dat, plotcor = FALSE)
 analysis_dat <- ReformData(analysis_dat)
 # analysis_dat includes data on the observations we will use.
-
+analysis_dat[, meanOzone := NULL]
+analysis_dat[, meanmaxOzone := NULL]
 
 
 # ------------------- PART 2------------------- #
 # --------- SETTING UP THE ANALYSIS --------- #
-outcome_names <- c('meanOzone', 'meanmaxOzone', 'mean4maxOzone', 'totNOxemissions')
+outcome_names <- c('mean4maxOzone', 'totNOxemissions')
 out.col <- which(names(analysis_dat) == outcome_analysis)
 trt.col <- which(names(analysis_dat) == 'SnCR')
 coord.cols <- which(names(analysis_dat) %in% c('Fac.Longitude', 'Fac.Latitude'))
@@ -188,11 +189,11 @@ dapsm$weight
 
 # Plotting maps of the matched pairs
 MatchedDataMap(naive.match$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
-               plot.title = 'Naive pairs')
+               plot.title = 'Naive pairs', point_data = FALSE)
 MatchedDataMap(cal.match$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
-               plot.title = 'Distance Caliper pairs')
+               plot.title = 'Distance Caliper pairs', point_data = FALSE)
 MatchedDataMap(DAPS.match.choice$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
-               plot.title = 'DAPSm pairs')
+               plot.title = 'DAPSm pairs', point_data = FALSE)
 
 
 
