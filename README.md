@@ -17,8 +17,8 @@ But first...
 
 In order to run the analysis we need two data sets:
 
-1. Data set on power plant characteristics available at ......
-2. Data set on ozone, temperature, and Census information measured at the ozone AQS monitoring sites, available at ......
+1. Data set on power plant characteristics available at https://dataverse.harvard.edu/dataverse/dapsm as "Power Plant Emissions Data".
+2. Data set on ozone, temperature, and Census information measured at the ozone AQS monitoring sites, available at https://dataverse.harvard.edu/dataverse/dapsm as "Ozone, Temperature and Census Raw Data".
 
 We further need the following R scripts:
 
