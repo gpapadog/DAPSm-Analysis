@@ -75,8 +75,7 @@ PSmatchEst <- function(dataset, out.col = NULL, trt.col = NULL,
   }
   
   if (!is.null(true_value)) {
-    r$cover <- (abs(true_value - r$est) <
-                  qnorm(0.975) * as.numeric(match.mod$est))
+    r$cover <- (abs(true_value - r$est) < qnorm(0.975) * as.numeric(match.mod$se))
   }
   
   ### Add pairs here from match.mod in the form that we want.
