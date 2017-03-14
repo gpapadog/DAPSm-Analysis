@@ -98,12 +98,12 @@ if (any(wh)) {
 }
 
 # Defining the results matrix.
-result <- array(NA, dim = c(4, 3))
-dimnames(result) <- list(methods = c('Naive', 'GBM', 'Distance Caliper', 'DAPSm'),
+methods <- c('Naive', 'GBM', 'Distance Caliper', 'DAPSm', 'Keele et al')
+result <- array(NA, dim = c(length(methods), 3))
+dimnames(result) <- list(method = methods,
                          statistic = c('LB', 'Estimate', 'UB'))
-
-num_match <- numeric(4)
-names(num_match) <- dimnames(result)[[1]]
+num_match <- numeric(length(methods))
+names(num_match) <- methods
 distance <- num_match
 
 naive_ps <- glm(as.formula(paste('SnCR ~ . - Fac.Latitude - Fac.Longitude -',
@@ -114,8 +114,8 @@ ignore.cols.coords <- c(ignore.cols, coord.cols)
 cols.balance <- setdiff(1:dim(subdta)[2],
                         c(trt.col, out.col, ignore.cols.coords,
                           which(names(subdta) == 'prop.scores')))
-bal <- array(NA, dim = c(5, length(cols.balance)))
-dimnames(bal) <- list(method = c(dimnames(result)[[1]], 'Full-data'),
+bal <- array(NA, dim = c(length(methods) + 1, length(cols.balance)))
+dimnames(bal) <- list(method = c(methods, 'Full-data'),
                       variable = names(subdta)[cols.balance])
 
 
