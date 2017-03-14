@@ -21,26 +21,39 @@ GetBalancePlots <- function(subdta, matched_ind) {
 }
 
 NaiveModel <- function(subdta, trt.col, out.col, caliper, coord.cols,
-                       cols.balance) {
-  
+                       cols.balance, matching_algorithm = c('optimal', 'greedy'),
+                       remove_unmatchables = TRUE) {
+
+  matching_algorithm <- match.arg(matching_algorithm)
   r <- NULL
 
-  naive.match <- PSmatchEst(subdta, trt.col = trt.col, out.col = out.col,
-                            SEreturn = TRUE, caliper = caliper,
-                            replace = FALSE, estimand = 'ATT',
-                            pairsRet = TRUE, coord.cols = coord.cols)
-  r$result <- naive.match$est + naive.match$SE * 1.96 * c(-1, 0, 1)
-  r$num_match <- dim(naive.match$pairs)[1]
-  r$distance <- mean(rdist(naive.match$pairs[, c(3, 4)],
-                         naive.match$pairs[, c(7, 8)]))
-  r$balance <- CalculateBalance(dtaBef = subdta,
-                                dtaAfter = subdta[c(naive.match$pairs[, 9],
-                                                    naive.match$pairs[, 10])],
-                                trt = trt.col, cols = cols.balance)
-  r$balance_plots <- GetBalancePlots(subdta, c(naive.match$pairs[, 9],
-                                               naive.match$pairs[, 10]))
+  if (matching_algorithm == 'greedy') {
+    naive.match <- PSmatchEst(subdta, trt.col = trt.col, out.col = out.col,
+                              SEreturn = TRUE, caliper = caliper,
+                              replace = FALSE, estimand = 'ATT',
+                              pairsRet = TRUE, coord.cols = coord.cols)
+  } else {
+    naive.match <- OptPSmatch(subdta, out.col = out.col, trt.col = trt.col,
+                              caliper = caliper, SEreturn = TRUE, pairsRet = TRUE,
+                              coord.cols = coord.cols,
+                              remove.unmatchables = remove.unmatchables)
+  }
+  r$result <- naive.match$est + naive.match$SE * 1.96 * c(- 1, 0, 1)
+  if (is.null(dim(naive.match$pairs))) {
+    r$num_match <- 0
+    r$distance <- Inf
+    r$balance <- rep(NA, length(cols.balance))
+  } else {
+    r$num_match <- dim(naive.match$pairs)[1]
+    r$distance <- rdist(naive.match$pairs[, c(3, 4)], naive.match$pairs[, c(7, 8)])
+    r$distance <- mean(r$distance)
+    dtaAfter <- subdta[c(naive.match$pairs[, 9], naive.match$pairs[, 10]), ]
+    r$balance <- CalculateBalance(dtaBef = subdta, dtaAfter = dtaAfter, trt = trt.col,
+                                  cols = cols.balance)
+    r$balance_plots <- GetBalancePlots(subdta, c(naive.match$pairs[, 9],
+                                                 naive.match$pairs[, 10]))
+  }
   r$pairs <- naive.match$pairs
-  
   return(r)
 }
 

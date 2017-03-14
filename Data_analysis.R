@@ -15,23 +15,26 @@ library(ggplot2)
 library(DAPSm)
 library(stringr)
 library(arepa)
+library(optmatch)
 
 source(config_path)
 # Setting the working directory.
 setwd(wd)
 
 # Sourcing the functions that I will be using.
-source('PSmatchEst_function.R')
-source('DistCal_functions.R')
-source('GBMPropScores_function.R')
-source('expit.R')
-source('StandDiff_function.R')
+source('CaliperEst_function.R')
+source('CreateNOxControlsFunction.R')
 source('Data_analysis_functions.R')
 source('Data_analysis_models_functions.R')
+source('dist.caliper_function.R')
+source('expit.R')
+source('GBMPropScores_function.R')
 source('make_data_functions.R')
+source('OptPSmatch_function.R')
 source('predict_variable_functions.R')
-source('CreateNOxControlsFunction.R')
 source('PredictHeatInput.R')
+source('PSmatchEst_function.R')
+source('StandDiff_function.R')
 
 
 # ------------------- PART 1------------------- #
@@ -122,8 +125,11 @@ dimnames(bal) <- list(method = c(methods, 'Full-data'),
 # ----- 3b. Starting the analysis.
 
 # Fitting the naive.
-naive.match <- NaiveModel(subdta, trt.col, out.col, caliper, coord.cols,
-                          cols.balance = cols.balance)
+naive.match <- NaiveModel(subdta, trt.col = trt.col, out.col = out.col,
+                          caliper = caliper, coord.cols = coord.cols,
+                          cols.balance = cols.balance,
+                          matching_algorithm = matching_algorithm,
+                          remove_unmatchables = remove_unmatchables)
 result[1, ] <- naive.match$result
 num_match[1] <- naive.match$num_match
 distance[1] <- naive.match$distance

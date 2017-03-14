@@ -29,3 +29,8 @@ month <- 6:8
 time_use <- list('2003', '2002', '2005', '2006')
 # Within how many kilometers we want to link the power plants to the ozone sites.
 within_km <- 100
+
+
+# Optimal or greedy matching.
+matching_algorithm <- 'optimal'
+remove_unmatchables <- FALSE
