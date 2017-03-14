@@ -36,6 +36,9 @@
 #' difference and a caliper on distance. The greedy option matches treated and control
 #' units sequentially, starting from the ones with the smallest propensity score
 #' difference. Defaults to 'optimal'.
+#' @param remove.unmatchables Logical. Argument of the optmatch function. Defaults to
+#' FALSE. If set to FALSE, the matching fails unless all treated units are matched. If
+#' set to TRUE, matching might return matches only for some of the treated units.
 #' 
 #' @return A vector of length 2. The first element is the causal effect estimated from
 #' a linear model on the matched pairs, adjusting for no observed confounding. The
@@ -46,9 +49,11 @@ CaliperEst <- function(dataset, out.col = NULL, trt.col = NULL, ps.caliper = 0.1
                        dist.caliper = 0.25, coords.columns = NULL, ignore.cols = NULL,
                        SEreturn = FALSE, pairsRet = FALSE, coord_dist = FALSE,
                        true_value = NULL,
-                       matching_algorithm = c('optimal', 'greedy')) {
+                       matching_algorithm = c('optimal', 'greedy'),
+                       remove.unmatchables = FALSE) {
   
   matching_algorithm <- match.arg(matching_algorithm)
+  r <- NULL
   
   dataset <- as.data.frame(dataset)
   # Naming outcome and treatment as 'Y', 'X'.
@@ -59,7 +64,20 @@ CaliperEst <- function(dataset, out.col = NULL, trt.col = NULL, ps.caliper = 0.1
                            control = dataset[dataset$X == 0, ],
                            ps.caliper = ps.caliper, dist.quan = dist.caliper,
                            coords.columns = coords.columns, coord_dist = coord_dist,
-                           matching_algorithm = matching_algorithm)
+                           matching_algorithm = matching_algorithm, 
+                           remove.unmatchables = remove.unmatchables)
+  
+  # If no matches were acheived, return missing values.
+  if (nrow(cal.daps) == 0) {
+    warning(paste0('No matches were acheived for distance caliper = ', dist.caliper,
+                   ', and propensity score caliper = ', ps.caliper))
+    r$est <- NA
+    r$se <- NA
+    r$pairs <- matrix(NA, nrow = 0, ncol = 12)
+    r$cover <- NA
+    return(r)
+  }
+  
   pairs.out <- cal.daps$match
   names(pairs.out) <- rownames(cal.daps)
   pairs.out <- na.omit(pairs.out)
@@ -74,16 +92,15 @@ CaliperEst <- function(dataset, out.col = NULL, trt.col = NULL, ps.caliper = 0.1
   est[1] <- lmod1$coef[2] 
   est[2] <- lmod2$coef[2]
   
-  r <- NULL
   r$est <- est
   
+  se_est <- c(summary(lmod1)$coef[2, 2], summary(lmod2)$coef[2, 2])
   if (!is.null(true_value)) {
-    se_est <- c(summary(lmod1)$coef[2, 2], summary(lmod2)$coef[2, 2])
-    r$cover <- (abs(true_value) - est < qnorm(0.975) * se_est)
+    r$cover <- (abs(true_value - est) < qnorm(0.975) * se_est)
   }
   
   if (SEreturn) {
-    r$SE <- c(summary(lmod1)$coef[2, 2], summary(lmod2)$coef[2, 2])
+    r$SE <- se_est
   }
   if (pairsRet) {
     which_cols <- c(which(names(dataset) %in% c('X', 'Y', 'prop.scores')))
