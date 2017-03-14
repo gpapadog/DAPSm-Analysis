@@ -21,7 +21,6 @@ GetPredictData <- function(time_pred, time_use, variable, dat_unit) {
   dat_unit <- as.data.table(dat_unit)
   all_variables <- c('uID', variable, 'year_month')
   
-  
   subdta <- subset(dat_unit, year_month %in% c(time_use, time_pred))
   subdta <- subdta[, all_variables, with = FALSE]
   setnames(subdta, variable, "Var")
@@ -31,7 +30,9 @@ GetPredictData <- function(time_pred, time_use, variable, dat_unit) {
   subdta <- subset(subdta, entry_at_timepred == 1)
   subdta[, entry_at_timepred := NULL]
 
-  
+  # If an observation has multiple entries, keep one that is not missing.
+  # subdta <- subset(subdta, !duplicated(subdta))
+
   subdta <- reshape(subdta, idvar = "uID", timevar = "year_month", direction = "wide")
   X <- as.data.frame(subdta)[, - 1]
   rownames(X) <- subdta[, uID]
