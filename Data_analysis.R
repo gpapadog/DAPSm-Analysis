@@ -137,7 +137,9 @@ bal[c(1, 5), ] <- naive.match$balance[c(2, 1), ]
 
 # Fitting GBM
 GBM.match <- GBMmodel(subdta, trt.col, out.col, caliper, coord.cols,
-                      cols.balance = cols.balance, seed = 1234)
+                      cols.balance = cols.balance, seed = 1234,
+                      matching_algorithm = matching_algorithm,
+                      remove_unmatchables = remove_unmatchables)
 result[2, ] <- GBM.match$result
 num_match[2] <- GBM.match$num_match
 distance[2] <- GBM.match$distance
@@ -146,7 +148,9 @@ bal[2, ] <- GBM.match$balance[2, ]
 # Fitting Distance Caliper
 cal.match <- DistCalModel(subdta, caliper, dist.caliper = 0.2, coord.cols,
                           ignore.cols = ignore.cols.coords, trt.col, out.col,
-                          cols.balance = cols.balance, coord_dist = TRUE)
+                          cols.balance = cols.balance, coord_dist = TRUE,
+                          matching_algorithm = matching_algorithm,
+                          remove_unmatchables = remove_unmatchables)
 result[3, ] <- cal.match$result
 num_match[3] <- cal.match$num_match
 distance[3] <- cal.match$distance
@@ -155,7 +159,9 @@ bal[3, ] <- cal.match$balance[2, ]
 # Fitting DAPSm.
 w_bal <- CalcDAPSWeightBalance(subdta, weights, cols.balance, trt.col, out.col,
                                coords.columns = coord.cols, caliper,
-                               coord_dist = TRUE)
+                               coord_dist = TRUE,
+                               matching_algorithm = matching_algorithm,
+                               remove.unmatchables = remove_unmatchables)
 
 dapsm <- DAPSchoiceModel(balance = w_bal$balance, cutoff = cutoff,
                          dataset = subdta, pairs = w_bal$pairs,
@@ -198,7 +204,7 @@ MatchedDataMap(naive.match$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
                plot.title = 'Naive pairs', point_data = FALSE)
 MatchedDataMap(cal.match$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
                plot.title = 'Distance Caliper pairs', point_data = FALSE)
-MatchedDataMap(DAPS.match.choice$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
+MatchedDataMap(dapsm$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
                plot.title = 'DAPSm pairs', point_data = FALSE)
 
 

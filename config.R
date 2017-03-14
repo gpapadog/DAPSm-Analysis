@@ -32,5 +32,5 @@ within_km <- 100
 
 
 # Optimal or greedy matching.
-matching_algorithm <- 'optimal'
+matching_algorithm <- 'greedy'
 remove_unmatchables <- FALSE
