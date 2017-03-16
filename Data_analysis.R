@@ -185,6 +185,39 @@ PlotWeightBalance(abs(w_bal$balance[, , - c(1, 2, 14, 16, 17, 18)]),
                   mar = c(4, 4, 2, 7), inset = -0.35)
 
 
+
+# Fitting Keele.
+source_path <- '~/Documents/ARP/DAPS_Simulations/functions/Keele/'
+source(paste0(source_path, '01_subsetmatch2.R'))
+source(paste0(source_path, '02_errorhandling.R'))
+source(paste0(source_path, '03_problemparameters2.R'))
+source(paste0(source_path, '04_constraintmatrix2.R'))
+n_matches = 1  # Number of matched per treated.
+subset_weight = 100  # Whether all the treated units need to be used
+use_controls = NULL  # Whether specific controls need to be used
+enforce_constraints <- FALSE
+library(Rcplex)
+
+
+keele_dta <- subdta[order(subdta$SnCR, decreasing = TRUE), ]
+t_ind <- as.numeric(keele_dta$SnCR)
+coords <- cbind(keele_dta$Fac.Longitude, keele_dta$Fac.Latitude)
+dist_mat <- rdist.earth(coords[t_ind == 1, ], coords[t_ind == 0, ])
+
+out <- subsetmatch(dist_mat = dist_mat, t_ind = t_ind, n_matches = n_matches, 
+                   mom_covs = NULL, mom_weights = NULL, mom_tols = NULL,
+                   exact_covs = NULL, near_exact_covs = NULL, near_exact_devs = NULL, 
+                   fine_covs = NULL, near_fine_covs = NULL, near_fine_devs = NULL, 
+                   subset_weight, use_controls, enforce_constraints)
+keele_dta <- keele_dta[c(out$t_id, out$c_id), ]
+keele_dta <- as.data.frame(keele_dta)
+lmod <- lm(keele_dta[, out.col] ~ keele_dta[, trt.col])
+result[5, ] <- lmod$coef[2] + 1.96 * summary(lmod)$coef[2, 2] * c(- 1, 0, 1)
+num_match[5] <- length(out$t_id)
+
+
+
+
 # Plotting the results.
 PlotResults(result, title = paste(outcome_analysis, paste(month, collapse = ','),
                                   '/', year))
