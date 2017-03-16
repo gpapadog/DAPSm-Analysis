@@ -36,7 +36,7 @@ NaiveModel <- function(subdta, trt.col, out.col, caliper, coord.cols,
     naive.match <- OptPSmatch(subdta, out.col = out.col, trt.col = trt.col,
                               caliper = caliper, SEreturn = TRUE, pairsRet = TRUE,
                               coord.cols = coord.cols,
-                              remove.unmatchables = remove.unmatchables)
+                              remove.unmatchables = remove_unmatchables)
   }
   r$result <- naive.match$est + naive.match$SE * 1.96 * c(- 1, 0, 1)
   if (is.null(dim(naive.match$pairs))) {
