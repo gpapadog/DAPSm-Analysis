@@ -24,6 +24,7 @@ AverageSulfurContent <- function(dat_unit) {
                       NOx.Scrub3 = NOx.Scrub3[1],
                       NOx.Scrub4 = NOx.Scrub4[1],
                       Is.Phase1 = Is.Phase1[1],
+                      Is.Phase2 = Is.Phase2[1],
                       year_month = year_month[1]),
                by = c("uID", 'Year', 'Month')]
   print('Aggregation completed.')
