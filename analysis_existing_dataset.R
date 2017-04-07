@@ -105,7 +105,7 @@ naive.match <- NaiveModel(subdta, trt.col = trt.col, out.col = out.col,
 result[1, ] <- naive.match$result
 num_match[1] <- naive.match$num_match
 distance[1] <- naive.match$distance
-bal[c(1, 5), ] <- naive.match$balance[c(2, 1), ]
+bal[c(1, 6), ] <- naive.match$balance[c(2, 1), ]
 
 # Fitting GBM
 GBM.match <- GBMmodel(subdta, trt.col, out.col, caliper, coord.cols,
@@ -135,6 +135,16 @@ w_bal <- CalcDAPSWeightBalance(subdta, weights, cols.balance, trt.col, out.col,
                                matching_algorithm = matching_algorithm,
                                remove.unmatchables = remove_unmatchables)
 
+# Plotting the standardized difference of means as a function of weight.
+PlotWeightBalance(w_bal$balance, full_data = - 5, weights, cutoff, inset = -0.5)
+# Power plant and area-level characteristics separately.
+PlotWeightBalance(abs(w_bal$balance[, , c(1, 2, 14, 16, 17, 18)]),
+                  full_data = -5, weights, cutoff, axis_cex = 0.6,
+                  mar = c(4, 4, 2, 4))
+PlotWeightBalance(abs(w_bal$balance[, , - c(1, 2, 14, 16, 17, 18)]),
+                  full_data = -5, weights, cutoff, axis_cex = 0.6,
+                  mar = c(4, 4, 2, 7), inset = -0.35)
+
 dapsm <- DAPSchoiceModel(balance = w_bal$balance, cutoff = cutoff,
                          dataset = subdta, pairs = w_bal$pairs,
                          full_pairs = w_bal$full_pairs,
@@ -146,15 +156,6 @@ num_match[4] <- dapsm$num_match
 distance[4] <- dapsm$distance
 bal[4, ] <- dapsm$balance[2, ]
 
-# Plotting the standardized difference of means as a function of weight.
-PlotWeightBalance(w_bal$balance, full_data = - 5, weights, cutoff, inset = -0.5)
-# Power plant and area-level characteristics separately.
-PlotWeightBalance(abs(w_bal$balance[, , c(1, 2, 14, 16, 17, 18)]),
-                  full_data = -5, weights, cutoff, axis_cex = 0.6,
-                  mar = c(4, 4, 2, 4))
-PlotWeightBalance(abs(w_bal$balance[, , - c(1, 2, 14, 16, 17, 18)]),
-                  full_data = -5, weights, cutoff, axis_cex = 0.6,
-                  mar = c(4, 4, 2, 7), inset = -0.35)
 
 
 
@@ -187,7 +188,7 @@ lmod <- lm(keele_dta[, out.col] ~ keele_dta[, trt.col])
 result[5, ] <- lmod$coef[2] + 1.96 * summary(lmod)$coef[2, 2] * c(- 1, 0, 1)
 num_match[5] <- length(out$t_id)
 
-
+# What is balance and distance for Keele?
 
 
 # Plotting the results.

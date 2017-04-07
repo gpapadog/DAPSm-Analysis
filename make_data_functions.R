@@ -63,15 +63,15 @@ UnitToFacility <- function(dat_unit) {
   print('Creating Capacity related variables.')
   # Max Hourly Heat Input Rate
   ## maxopp is the max total number of hours operating time for each of 12 months
-  maxopp = with(dat_unit, tapply(Operating.Time, year_month, max, na.rm = TRUE))
+  maxopp <- with(dat_unit, tapply(Operating.Time, year_month, max, na.rm = TRUE))
   ### Max.Hourly.HI.Rate..MMBtu.hr. is the heat input capacity (MMBtu/hour)
   for (i in 1:length(maxopp))
     dat_unit[year_month == names(maxopp)[i],
              Capacity:= maxopp[i] * Max.Hourly.HI.Rate..MMBtu.hr.] # MMBtu/month.
   
   # Percent Capacity is Heat Input / Capacity
-  dat_unit$PctCapacity = dat_unit$Heat.Input..MMBtu / dat_unit$Capacity
-  with(dat_unit, mean(PctCapacity > 1.5, na.rm = TRUE)) ## No units for Aug 2014
+  dat_unit$PctCapacity <- dat_unit$Heat.Input..MMBtu / dat_unit$Capacity
+  with(dat_unit, mean(PctCapacity > 1.5, na.rm = TRUE))
   dat_unit$PctCapacity[dat_unit$PctCapacity > 1.5] = NA ## > 150 % capacity
   
   
@@ -113,7 +113,7 @@ UnitToFacility <- function(dat_unit) {
   print('Aggregation completed.')
   
   print('Percentage of facilities with pctCapacity > 1.5, set to NA.')
-  print(with(dat_facility, mean(pctCapacity > 1.5, na.rm = TRUE))) # 0 for Aug 2014.
+  print(with(dat_facility, mean(pctCapacity > 1.5, na.rm = TRUE)))
   dat_facility$pctCapacity[dat_facility$pctCapacity > 1.5] = NA ## > 150% capacity
   
   setkeyv(dat_facility, "FacID")

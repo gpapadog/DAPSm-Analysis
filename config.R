@@ -17,8 +17,8 @@ outcome_analysis <- 'mean4maxOzone'
 # 2. 'totNOxemissions'
 
 # Specify the analysis details
-caliper <- 1
-cutoff <- 0.15
+caliper <- 2
+cutoff <- 0.2
 weights <- seq(0, 1, length.out = 40)  # values of w for the optimal DAPSm scan.
 
 
@@ -32,5 +32,5 @@ within_km <- 100
 
 
 # Optimal or greedy matching.
-matching_algorithm <- 'optimal'
+matching_algorithm <- 'greedy'
 remove_unmatchables <- TRUE
