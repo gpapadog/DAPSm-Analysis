@@ -51,9 +51,22 @@ UnitToFacility <- function(dat_unit) {
   print('Creating NOx control technologies variables')
   dat_unit = NOxcontroltechnologies(dat_unit)
   dat_unit$NumNOxControls = 0
-  dat_unit$NumNOxControls = apply(dat_unit[, c("SCR", "SNCR", "LowNOxBurner", "OverFire",
-                                               "Ammonia", "CombustMod", "WaterInj", "OtherNOx"),
-                                           with = FALSE], 1, sum, na.rm = TRUE)
+  
+  dat_unit[, idx := seq(nrow(dat_unit))]
+  
+  dat_unit[, SCR := as.numeric(SCR)]
+  dat_unit[, SNCR := as.numeric(SNCR)]
+  dat_unit[, LowNOxBurner := as.numeric(LowNOxBurner)]
+  dat_unit[, OverFire := as.numeric(OverFire)]
+  dat_unit[, Ammonia := as.numeric(Ammonia)]
+  dat_unit[, CombustMod := as.numeric(CombustMod)]
+  dat_unit[, WaterInj := as.numeric(WaterInj)]
+  dat_unit[, OtherNOx := as.numeric(OtherNOx)]
+  
+  dat_unit[, NumNOxControls := sum(SCR, SNCR, LowNOxBurner, OverFire,
+                                   Ammonia, CombustMod, WaterInj, OtherNOx),
+           by = idx]
+  dat_unit[, idx := NULL]
 
   ## Group SCR and SnCR as one category
   dat_unit$S_n_CR = apply(dat_unit[, c("SCR", "SNCR"), with = FALSE], 1, any, na.rm = TRUE)
