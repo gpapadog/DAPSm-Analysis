@@ -1,6 +1,5 @@
 # ImputeTS for our data
 
-
 config_path <- '~/Github/DAPSm-Analysis/config.R'
 
 # Loading libraries.
@@ -47,6 +46,28 @@ full_data <- LoadUnitLevelData(data_dir)
 full_data[, V1 := NULL]
 dat_unit <- CleanPPunits(full_data, year = year, month = month)
 dat_unit <- AverageSulfurContent(dat_unit)
+setkeyv(dat_unit, c('uID', 'Year', 'Month'))
+subdta <- ImputeHeatInput(dat_unit, year, month, method = 'kalman')
 
+# ---- STEP 2: Aggregate to the facility level.
+subdta_ym <- subset(subdta, Year == year & Month %in% month)
+dat_facility <- UnitToFacility(dat_unit = subdta_ym)
 
+print(paste('Dropping', sum(dat_facility$totHeatInput == 0, na.rm = TRUE),
+            'facilities for heat input = 0'))
+dat_facility <- subset(dat_facility, totHeatInput > 0 | is.na(totHeatInput))
+
+# ---- STEP 3: Linking the aggregated data to ozone monitors.
+dat <- LinkPPtoMonitors(dat_facility, within_km, year, month, OzTempCen = data_dir)
+
+# Dropping facilities with missing data for at least one month.
+wh <- which(dat$nmonths != length(month))
+print(paste('Dropping', length(wh), 'out of', length(unique(dat$FacID)),
+            'facilities due to missing information on at least one month'))
+if (length(wh) > 0) {
+  dat <- dat[- wh, ]
+}
+
+analysis_dat <- CleanData(dat, plotcor = FALSE)
+analysis_dat <- ReformData(analysis_dat)
 
