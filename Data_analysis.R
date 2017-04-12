@@ -60,10 +60,6 @@ dat_facility <- subset(dat_facility, totHeatInput > 0 | is.na(totHeatInput))
 dat <- LinkPPtoMonitors(dat_facility, within_km, year, month, OzTempCen = data_dir)
 
 
-# --------- Up to here, the data look the same. --------- #
-
-
-
 # Dropping facilities with missing data for at least one month.
 wh <- which(dat$nmonths != length(month))
 print(paste('Dropping', length(wh), 'out of', length(unique(dat$FacID)),
