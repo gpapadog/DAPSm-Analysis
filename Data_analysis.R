@@ -1,7 +1,4 @@
-# Author: Georgia Papadogeorgou
-# Date: 5/15/2016
-# Desc: Using the facility level data, we fit the models and perform the analysis
-#       using the naive, and the spatial propensity score matching methods.
+# ImputeTS for our data
 
 config_path <- '~/Github/DAPSm-Analysis/config.R'
 
@@ -16,7 +13,7 @@ library(DAPSm)
 library(stringr)
 library(arepa)
 library(optmatch)
-library(gbm)
+library(imputeTS)
 
 source(config_path)
 # Setting the working directory.
@@ -32,39 +29,62 @@ source('expit.R')
 source('GBMPropScores_function.R')
 source('make_data_functions.R')
 source('OptPSmatch_function.R')
-source('predict_variable_functions.R')
-source('PredictHeatInput.R')
 source('PSmatchEst_function.R')
 source('StandDiff_function.R')
-
+source('CleanPPunits_function.R')
+source('AverageSulfurContent_function.R')
+source('ImputeHeatInput_function.R')
+source('PredictHeatInput_function.R')
+source('Keele_et_al_functions/01_subsetmatch2.R')
+source('Keele_et_al_functions/02_errorhandling.R')
+source('Keele_et_al_functions/03_problemparameters2.R')
+source('Keele_et_al_functions/04_constraintmatrix2.R')
 
 # ------------------- PART 1------------------- #
 # ------ CREATING THE ANALYSIS DATA SET ------ #
 
 
 # ---- STEP 1. Loading unit level data and predicting heat input.
-dat_unit <- LoadUnitLevelData(data_dir)
-subdta <- PredictHeatInput(dat_unit, year, month, time_use)
+full_data <- LoadUnitLevelData(data_dir)
+full_data[, V1 := NULL]
+dat_unit <- CleanPPunits(full_data, year = year, month = month)
+dat_unit <- AverageSulfurContent(dat_unit)
+setkeyv(dat_unit, c('uID', 'Year', 'Month'))
 
-# ---- STEP 2: Aggregate to the facility level.
-dat_facility <- UnitToFacility(dat_unit = subdta)
+if (impute_with_ts) {
+  subdta <- ImputeHeatInput(dat_unit, year, month, method = 'kalman')
+  subdta_ym <- subset(subdta, Year == year & Month %in% month)
+} else {
+  lm_pred <- NewPredictHeatInput(dat_unit, year, month, time_use)
+  print(lm_pred$total)
+  print(lm_pred$missing)
+  print(lm_pred$rsquared)
+  print(lm_pred$num_pred)
+  subdta_ym <- lm_pred$data
+  wh <- which(subdta_ym$Heat.Input..MMBtu. < 0)
+  print(paste('Setting', length(wh), 'negative heat input entries to 0.'))
+  subdta_ym$Heat.Input..MMBtu.[wh] <- 0
+}
 
-# Dropping facilities that did not operate.
+# ---- STEP 2: Aggregating to the facility level.
+dat_facility <- UnitToFacility(dat_unit = subdta_ym)
+
 print(paste('Dropping', sum(dat_facility$totHeatInput == 0, na.rm = TRUE),
             'facilities for heat input = 0'))
-dat_facility <- subset(dat_facility, totHeatInput > 0 | is.na(totHeatInput))
+print(paste('Dropping', sum(is.na(dat_facility$totHeatInput)),
+            'facilities for missing heat input'))
+dat_facility <- subset(dat_facility, totHeatInput > 0)
 
 # ---- STEP 3: Linking the aggregated data to ozone monitors.
-# To run the next command you need to run the script that links ozone, temperature
-# and Census information.
 dat <- LinkPPtoMonitors(dat_facility, within_km, year, month, OzTempCen = data_dir)
-
 
 # Dropping facilities with missing data for at least one month.
 wh <- which(dat$nmonths != length(month))
 print(paste('Dropping', length(wh), 'out of', length(unique(dat$FacID)),
             'facilities due to missing information on at least one month'))
-dat <- dat[- wh, ]
+if (length(wh) > 0) {
+  dat <- dat[- wh, ]
+}
 
 analysis_dat <- CleanData(dat, plotcor = FALSE)
 analysis_dat <- ReformData(analysis_dat)
@@ -189,10 +209,6 @@ PlotWeightBalance(abs(w_bal$balance[, , - c(1, 2, 14, 16, 17, 18)]),
 
 
 # Fitting Keele.
-source('Keele_et_al_functions/01_subsetmatch2.R')
-source('Keele_et_al_functions/02_errorhandling.R')
-source('Keele_et_al_functions/03_problemparameters2.R')
-source('Keele_et_al_functions/04_constraintmatrix2.R')
 n_matches = 1  # Number of matched per treated.
 subset_weight = 100  # Whether all the treated units need to be used
 use_controls = NULL  # Whether specific controls need to be used
