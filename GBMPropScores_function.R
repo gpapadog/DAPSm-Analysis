@@ -18,6 +18,7 @@ GBMPropScores <- function(dta, ignore.cols = NULL, interaction.depth = 3,
   #
   # Returns:
   #  Vector of propensity score estimates.
+  require(gbm)
 
   dta <- as.data.frame(dta)
   dta <- FormDataset(dta, trt.col = trt.col)

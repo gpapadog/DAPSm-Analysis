@@ -37,7 +37,9 @@ dist.caliper <- function(treated, control, ps.caliper = 0.1, dist.quan = 0.25,
                          remove.unmatchables = FALSE) {
   
   matching_algorithm <- match.arg(matching_algorithm)
-
+  require(fields)  # For rdist().
+  require(optmatch)  # For caliper() and match_on() functions.
+  
   if (!is.null(coords.columns)) {
     names(treated)[coords.columns] <- c('Longitude', 'Latitude')
     names(control)[coords.columns] <- c('Longitude', 'Latitude')
