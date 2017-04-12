@@ -187,11 +187,10 @@ PlotWeightBalance(abs(w_bal$balance[, , - c(1, 2, 14, 16, 17, 18)]),
 
 
 # Fitting Keele.
-source_path <- '~/Documents/ARP/DAPS_Simulations/functions/Keele/'
-source(paste0(source_path, '01_subsetmatch2.R'))
-source(paste0(source_path, '02_errorhandling.R'))
-source(paste0(source_path, '03_problemparameters2.R'))
-source(paste0(source_path, '04_constraintmatrix2.R'))
+source('Keele_et_al_functions/01_subsetmatch2.R')
+source('Keele_et_al_functions/02_errorhandling.R')
+source('Keele_et_al_functions/03_problemparameters2.R')
+source('Keele_et_al_functions/04_constraintmatrix2.R')
 n_matches = 1  # Number of matched per treated.
 subset_weight = 100  # Whether all the treated units need to be used
 use_controls = NULL  # Whether specific controls need to be used
