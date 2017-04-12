@@ -161,3 +161,7 @@ DAPSoptModel <- function(subdta, trt.col, out.col, coord.cols,
 
 
 
+
+
+
+
