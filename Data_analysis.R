@@ -33,7 +33,6 @@ source('PSmatchEst_function.R')
 source('StandDiff_function.R')
 source('CleanPPunits_function.R')
 source('AverageSulfurContent_function.R')
-source('ImputeHeatInput_function.R')
 source('PredictHeatInput_function.R')
 source('Keele_et_al_functions/01_subsetmatch2.R')
 source('Keele_et_al_functions/02_errorhandling.R')
@@ -51,20 +50,18 @@ dat_unit <- CleanPPunits(full_data, year = year, month = month)
 dat_unit <- AverageSulfurContent(dat_unit)
 setkeyv(dat_unit, c('uID', 'Year', 'Month'))
 
-if (impute_with_ts) {
-  subdta <- ImputeHeatInput(dat_unit, year, month, method = 'kalman')
-  subdta_ym <- subset(subdta, Year == year & Month %in% month)
-} else {
-  lm_pred <- NewPredictHeatInput(dat_unit, year, month, time_use)
-  print(lm_pred$total)
-  print(lm_pred$missing)
-  print(lm_pred$rsquared)
-  print(lm_pred$num_pred)
-  subdta_ym <- lm_pred$data
-  wh <- which(subdta_ym$Heat.Input..MMBtu. < 0)
-  print(paste('Setting', length(wh), 'negative heat input entries to 0.'))
-  subdta_ym$Heat.Input..MMBtu.[wh] <- 0
-}
+# Imputing heat input at the unit level.
+lm_pred <- NewPredictHeatInput(dat_unit, year, month, time_use)
+print(lm_pred$total)
+print(lm_pred$missing)
+print(lm_pred$rsquared)
+print(lm_pred$num_pred)
+subdta_ym <- lm_pred$data
+# Negative predicted values set to 0.
+wh <- which(subdta_ym$Heat.Input..MMBtu. < 0)
+print(paste('Setting', length(wh), 'negative heat input entries to 0.'))
+subdta_ym$Heat.Input..MMBtu.[wh] <- 0
+
 
 # ---- STEP 2: Aggregating to the facility level.
 dat_facility <- UnitToFacility(dat_unit = subdta_ym)
@@ -88,9 +85,6 @@ if (length(wh) > 0) {
 
 analysis_dat <- CleanData(dat, plotcor = FALSE)
 analysis_dat <- ReformData(analysis_dat)
-# analysis_dat includes data on the observations we will use.
-analysis_dat[, meanOzone := NULL]
-analysis_dat[, meanmaxOzone := NULL]
 
 
 # ------------------- PART 2------------------- #

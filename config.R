@@ -27,7 +27,6 @@ year <- 2004
 month <- 6:8
 # Years we use in order to predict heat input when missing.
 time_use <- list('2003', '2002', '2005', '2006')
-impute_with_ts <- FALSE  # Impute with imputeTS (TRUE) or with linear model (FALSE).
 # Within how many kilometers we want to link the power plants to the ozone sites.
 within_km <- 100
 
