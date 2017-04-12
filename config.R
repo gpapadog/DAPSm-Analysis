@@ -17,8 +17,8 @@ outcome_analysis <- 'mean4maxOzone'
 # 2. 'totNOxemissions'
 
 # Specify the analysis details
-caliper <- 2
-cutoff <- 0.2
+caliper <- 1
+cutoff <- 0.15
 weights <- seq(0, 1, length.out = 40)  # values of w for the optimal DAPSm scan.
 
 
