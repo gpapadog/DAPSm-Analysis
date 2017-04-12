@@ -16,6 +16,7 @@ library(DAPSm)
 library(stringr)
 library(arepa)
 library(optmatch)
+library(gbm)
 
 source(config_path)
 # Setting the working directory.
