@@ -33,10 +33,12 @@ source('StandDiff_function.R')
 source('CleanPPunits_function.R')
 source('AverageSulfurContent_function.R')
 source('PredictHeatInput_function.R')
+source('keele_match_function.R')
 source('Keele_et_al_functions/01_subsetmatch2.R')
 source('Keele_et_al_functions/02_errorhandling.R')
 source('Keele_et_al_functions/03_problemparameters2.R')
 source('Keele_et_al_functions/04_constraintmatrix2.R')
+
 
 # ------------------- PART 1------------------- #
 # ------ CREATING THE ANALYSIS DATA SET ------ #
@@ -101,19 +103,11 @@ subdta <- analysis_dat[, unique(c(trt.col, out.col, coord.cols, conf)), with = F
 # --------- PERFORMING THE ANALYSIS --------- #
 
 # ---  3a. Initializing the analysis.
-
 set.seed(1234)
 
 trt.col <- 1
 out.col <- 2
 coord.cols <- c(4, 3)
-
-# Dropping missing data
-wh <- is.na(subdta[, names(subdta)[2], with = FALSE])
-if (any(wh)) {
-  print(paste('Dropping', sum(wh), 'observations due to missing outcome.'))
-  subdta <- subdta[- which(wh), ]
-}
 
 # Defining the results matrix.
 methods <- c('Naive', 'GBM', 'Distance Caliper', 'DAPSm', 'Keele et al')
@@ -148,7 +142,7 @@ naive.match <- NaiveModel(subdta, trt.col = trt.col, out.col = out.col,
 result[1, ] <- naive.match$result
 num_match[1] <- naive.match$num_match
 distance[1] <- naive.match$distance
-bal[c(1, 5), ] <- naive.match$balance[c(2, 1), ]
+bal[c(1, 6), ] <- naive.match$balance[c(2, 1), ]
 
 # Fitting GBM
 GBM.match <- GBMmodel(subdta, trt.col, out.col, caliper, coord.cols,
@@ -208,24 +202,14 @@ use_controls = NULL  # Whether specific controls need to be used
 enforce_constraints <- FALSE
 library(Rcplex)
 
-
-keele_dta <- subdta[order(subdta$SnCR, decreasing = TRUE), ]
-t_ind <- as.numeric(keele_dta$SnCR)
-coords <- cbind(keele_dta$Fac.Longitude, keele_dta$Fac.Latitude)
-dist_mat <- rdist.earth(coords[t_ind == 1, ], coords[t_ind == 0, ])
-
-out <- subsetmatch(dist_mat = dist_mat, t_ind = t_ind, n_matches = n_matches, 
-                   mom_covs = NULL, mom_weights = NULL, mom_tols = NULL,
-                   exact_covs = NULL, near_exact_covs = NULL, near_exact_devs = NULL, 
-                   fine_covs = NULL, near_fine_covs = NULL, near_fine_devs = NULL, 
-                   subset_weight, use_controls, enforce_constraints)
-keele_dta <- keele_dta[c(out$t_id, out$c_id), ]
-keele_dta <- as.data.frame(keele_dta)
-lmod <- lm(keele_dta[, out.col] ~ keele_dta[, trt.col])
-result[5, ] <- lmod$coef[2] + 1.96 * summary(lmod)$coef[2, 2] * c(- 1, 0, 1)
-num_match[5] <- length(out$t_id)
-
-
+keele <- keele_match(subdta, trt_col = trt_col, out_col = out_col,
+                     coords.columns = coord.cols, subset_weight = subset_weight,
+                     n_matches = n_matches, use_controls = use_controls,
+                     enforce_constraints = enforce_constraints, pairsRet = TRUE)
+result[5, ] <- keele$CI
+num_match[5] <- keele$num_match
+distance[5] <- 
+bal[5, ] <- 
 
 
 # Plotting the results.
