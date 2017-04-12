@@ -16,6 +16,7 @@ library(DAPSm)
 library(stringr)
 library(arepa)
 library(optmatch)
+library(gbm)
 
 source(config_path)
 # Setting the working directory.
@@ -57,6 +58,7 @@ dat_facility <- subset(dat_facility, totHeatInput > 0 | is.na(totHeatInput))
 # To run the next command you need to run the script that links ozone, temperature
 # and Census information.
 dat <- LinkPPtoMonitors(dat_facility, within_km, year, month, OzTempCen = data_dir)
+
 
 # Dropping facilities with missing data for at least one month.
 wh <- which(dat$nmonths != length(month))

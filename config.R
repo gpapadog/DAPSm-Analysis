@@ -17,8 +17,8 @@ outcome_analysis <- 'mean4maxOzone'
 # 2. 'totNOxemissions'
 
 # Specify the analysis details
-caliper <- 1
-cutoff <- 0.15
+caliper <- 2
+cutoff <- 0.2
 weights <- seq(0, 1, length.out = 40)  # values of w for the optimal DAPSm scan.
 
 
@@ -27,10 +27,11 @@ year <- 2004
 month <- 6:8
 # Years we use in order to predict heat input when missing.
 time_use <- list('2003', '2002', '2005', '2006')
+impute_with_ts <- FALSE  # Impute with imputeTS (TRUE) or with linear model (FALSE).
 # Within how many kilometers we want to link the power plants to the ozone sites.
 within_km <- 100
 
 
 # Optimal or greedy matching.
-matching_algorithm <- 'optimal'
+matching_algorithm <- 'greedy'
 remove_unmatchables <- TRUE
