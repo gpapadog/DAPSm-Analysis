@@ -1,7 +1,7 @@
-NewPredictHeatInput <- function(dat_unit, year, month, time_use) {
+NewPredictHeatInput <- function(dat, year, month, time_use) {
   
   time_use <- as.numeric(time_use)
-  other_years <- subset(dat_unit, Year %in% time_use & Month %in% month)
+  other_years <- subset(dat, Year %in% time_use & Month %in% month)
 
   rsquared <- array(NA, dim = c(length(time_use), length(month)))
   dimnames(rsquared) <- list(use = time_use, pred = paste0(year, '_', month))
@@ -9,7 +9,7 @@ NewPredictHeatInput <- function(dat_unit, year, month, time_use) {
   
   r <- NULL
   r_data <- subset(dat, Year == year & Month %in% month)
-  r$total <- r_data[, list(missing = length(Heat.Input..MMBtu.)), by = 'Month']
+  r$total <- r_data[, list(total = length(Heat.Input..MMBtu.)), by = 'Month']
   r$missing <- r_data[, list(missing = sum(is.na(Heat.Input..MMBtu.))), by = 'Month']
   
   for (mm in 1:length(month)) {
@@ -47,6 +47,7 @@ NewPredictHeatInput <- function(dat_unit, year, month, time_use) {
       num_pred[uu, mm] <- curr_missing - cant_predict - sum(is.na(D$val))
     }
   }
+  num_pred <- rbind(num_pred, total = apply(num_pred, 2, sum))
   r$data <- r_data
   r$num_pred <- num_pred
   r$rsquared <- rsquared

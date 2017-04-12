@@ -36,6 +36,7 @@ source('StandDiff_function.R')
 source('CleanPPunits_function.R')
 source('AverageSulfurContent_function.R')
 source('ImputeHeatInput_function.R')
+source('NewPredictHeatInput_function.R')
 
 # ------------------- PART 1------------------- #
 # ------ CREATING THE ANALYSIS DATA SET ------ #
@@ -68,7 +69,9 @@ dat_facility <- UnitToFacility(dat_unit = subdta_ym)
 
 print(paste('Dropping', sum(dat_facility$totHeatInput == 0, na.rm = TRUE),
             'facilities for heat input = 0'))
-dat_facility <- subset(dat_facility, totHeatInput > 0 | is.na(totHeatInput))
+print(paste('Dropping', sum(is.na(dat_facility$totHeatInput)),
+            'facilities for missing heat input'))
+dat_facility <- subset(dat_facility, totHeatInput > 0)
 
 # ---- STEP 3: Linking the aggregated data to ozone monitors.
 dat <- LinkPPtoMonitors(dat_facility, within_km, year, month, OzTempCen = data_dir)

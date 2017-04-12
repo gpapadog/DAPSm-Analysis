@@ -68,10 +68,9 @@ UnitToFacility <- function(dat_unit) {
            by = idx]
   dat_unit[, idx := NULL]
 
-  ## Group SCR and SnCR as one category
-  dat_unit$S_n_CR = apply(dat_unit[, c("SCR", "SNCR"), with = FALSE], 1, any, na.rm = TRUE)
-  
-  
+  # Group SCR and SnCR as one category
+  dat_unit[, S_n_CR := as.numeric(SCR + SNCR >= 1)]
+
   ## -- Define Operating Capacity as the maximum number of hours per month times the
   print('Creating Capacity related variables.')
   # Max Hourly Heat Input Rate
