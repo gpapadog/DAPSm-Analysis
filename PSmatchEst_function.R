@@ -1,6 +1,3 @@
-# Date Created: 1/18/2016
-# Author: Georgia Papadogeorgou
-
 PSmatchEst <- function(dataset, out.col = NULL, trt.col = NULL,
                        pscores = NULL, estimand = 'ATT',
                        caliper = 0.1, SEreturn = FALSE,
@@ -75,7 +72,8 @@ PSmatchEst <- function(dataset, out.col = NULL, trt.col = NULL,
   }
   
   if (!is.null(true_value)) {
-    r$cover <- (abs(true_value - r$est) < qnorm(0.975) * as.numeric(match.mod$se))
+    r$cover <- (abs(true_value - r$est) <
+                  qnorm(0.975) * as.numeric(match.mod$est))
   }
   
   ### Add pairs here from match.mod in the form that we want.
@@ -93,6 +91,4 @@ PSmatchEst <- function(dataset, out.col = NULL, trt.col = NULL,
   }
   return(r)
 }
-
-
 

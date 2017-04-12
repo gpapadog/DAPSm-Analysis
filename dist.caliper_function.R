@@ -23,6 +23,9 @@
 #' difference and a caliper on distance. The greedy option matches treated and control
 #' units sequentially, starting from the ones with the smallest propensity score
 #' difference. Defaults to 'optimal'.
+#' @param remove.unmatchables Logical. Argument of the optmatch function. Defaults to
+#' FALSE. If set to FALSE, the matching fails unless all treated units are matched. If
+#' set to TRUE, matching might return matches only for some of the treated units.
 #' 
 #' @return A dataframe, where each row corresponds to each treated unit, and includes
 #' the control unit to which it was matched, their propensity score difference, their
@@ -30,14 +33,12 @@
 #' 
 dist.caliper <- function(treated, control, ps.caliper = 0.1, dist.quan = 0.25,
                          coords.columns = NULL, coord_dist = FALSE,
-                         matching_algorithm = c('optimal', 'greedy')) {
+                         matching_algorithm = c('optimal', 'greedy'),
+                         remove.unmatchables = FALSE) {
   
   matching_algorithm <- match.arg(matching_algorithm)
   require(fields)  # For rdist().
   require(optmatch)  # For caliper() and match_on() functions.
-  
-  # Setting the caliper.
-  caliper <- caliper * sd(c(treated$prop.scores, control$prop.scores))
   
   if (!is.null(coords.columns)) {
     names(treated)[coords.columns] <- c('Longitude', 'Latitude')
@@ -56,16 +57,16 @@ dist.caliper <- function(treated, control, ps.caliper = 0.1, dist.quan = 0.25,
   
   cut.off <- quantile(dist.mat, probs = dist.quan)
   # Using caliper() function from the optmatch package that returns 0 or Inf.
-  infinite_distance <- caliper(dist.mat, cut.off)
+  infinite_distance <- as.matrix(caliper(dist.mat, cut.off))
   
   # Using match_on() from optmatch to get the propensity score difference.
   treatment_indicator <- c(rep(1, nrow(treated)), rep(0, nrow(control)))
   propensity_scores <- c(treated$prop.scores, control$prop.scores)
   D <- match_on(treatment_indicator ~ propensity_scores, method = 'euclidean')
   # Adding the distance caliper.
-  D <- D + infinite_distance
+  D <- as.matrix(D) + infinite_distance
   # Adding the propensity score caliper.
-  D <- D + caliper(D, caliper)
+  D <- D + as.matrix(caliper(D, caliper * sd(propensity_scores)))
   
   # The matrix of matches is mat.
   mat <- data.frame(match = rep(NA, dim(treated)[1]),
@@ -74,20 +75,27 @@ dist.caliper <- function(treated, control, ps.caliper = 0.1, dist.quan = 0.25,
   rownames(mat) <- rownames(treated)
   
   if (matching_algorithm == 'greedy') {
-    pairs <- MinDistMatch(as.matrix(D), caliper = NULL)
+    pairs <- MinDistMatch(D, caliper = NULL)
   } else {  # Optimal matching using the optmatch R package.
-    opt_match <- pairmatch(D, data = data.frame(treatment_indicator))
+    opt_match <- pairmatch(D, data = data.frame(treatment_indicator),
+                           remove.unmatchables = remove.unmatchables)
     
     pairs_ids <- sort(as.character(unique(opt_match[!is.na(opt_match)])))
-    wh_trt <- 1:nrow(treated)
-    wh_con <- (nrow(treated) + 1) : (nrow(treated) + nrow(control))
-    match_trt <- cbind(wh_trt, group = as.character(opt_match[wh_trt]))
-    match_con <- cbind(wh_con, group = as.character(opt_match[wh_con]))
-    pairs <- merge(match_trt, match_con, by = 'group')
-    pairs <- pairs[, - which(names(pairs) == 'group')]
-    pairs <- na.omit(pairs)
-    pairs[, 1] <- as.numeric(as.character(pairs[, 1]))
-    pairs[, 2] <- as.numeric(as.character(pairs[, 2])) - nrow(treated)
+    if (length(pairs_ids) == 0) {  # If no matches were acheived return empty matrix.
+      mat <- matrix(NA, nrow = 0, ncol = 5)
+      return(mat)
+      
+    } else {  # matches were made.
+      wh_trt <- 1:nrow(treated)
+      wh_con <- (nrow(treated) + 1) : (nrow(treated) + nrow(control))
+      match_trt <- cbind(wh_trt, group = as.character(opt_match[wh_trt]))
+      match_con <- cbind(wh_con, group = as.character(opt_match[wh_con]))
+      pairs <- merge(match_trt, match_con, by = 'group')
+      pairs <- pairs[, - which(names(pairs) == 'group')]
+      pairs <- na.omit(pairs)
+      pairs[, 1] <- as.numeric(as.character(pairs[, 1]))
+      pairs[, 2] <- as.numeric(as.character(pairs[, 2])) - nrow(treated)
+    }
   }
   
   matched_trt <- pairs[, 1]

@@ -21,59 +21,89 @@ GetBalancePlots <- function(subdta, matched_ind) {
 }
 
 NaiveModel <- function(subdta, trt.col, out.col, caliper, coord.cols,
-                       cols.balance) {
-  
+                       cols.balance, matching_algorithm = c('optimal', 'greedy'),
+                       remove_unmatchables = TRUE) {
+
+  matching_algorithm <- match.arg(matching_algorithm)
   r <- NULL
 
-  naive.match <- PSmatchEst(subdta, trt.col = trt.col, out.col = out.col,
-                            SEreturn = TRUE, caliper = caliper,
-                            replace = FALSE, estimand = 'ATT',
-                            pairsRet = TRUE, coord.cols = coord.cols)
-  r$result <- naive.match$est + naive.match$SE * 1.96 * c(-1, 0, 1)
-  r$num_match <- dim(naive.match$pairs)[1]
-  r$distance <- mean(rdist(naive.match$pairs[, c(3, 4)],
-                         naive.match$pairs[, c(7, 8)]))
-  r$balance <- CalculateBalance(dtaBef = subdta,
-                                dtaAfter = subdta[c(naive.match$pairs[, 9],
-                                                    naive.match$pairs[, 10])],
-                                trt = trt.col, cols = cols.balance)
-  r$balance_plots <- GetBalancePlots(subdta, c(naive.match$pairs[, 9],
-                                               naive.match$pairs[, 10]))
+  if (matching_algorithm == 'greedy') {
+    naive.match <- PSmatchEst(subdta, trt.col = trt.col, out.col = out.col,
+                              SEreturn = TRUE, caliper = caliper,
+                              replace = FALSE, estimand = 'ATT',
+                              pairsRet = TRUE, coord.cols = coord.cols)
+  } else {
+    naive.match <- OptPSmatch(subdta, out.col = out.col, trt.col = trt.col,
+                              caliper = caliper, SEreturn = TRUE, pairsRet = TRUE,
+                              coord.cols = coord.cols,
+                              remove.unmatchables = remove_unmatchables)
+  }
+  r$result <- naive.match$est + naive.match$SE * 1.96 * c(- 1, 0, 1)
+  if (is.null(dim(naive.match$pairs))) {
+    r$num_match <- 0
+    r$distance <- Inf
+    r$balance <- rep(NA, length(cols.balance))
+  } else {
+    r$num_match <- dim(naive.match$pairs)[1]
+    r$distance <- rdist(naive.match$pairs[, c(3, 4)], naive.match$pairs[, c(7, 8)])
+    r$distance <- mean(r$distance)
+    dtaAfter <- subdta[c(naive.match$pairs[, 9], naive.match$pairs[, 10]), ]
+    r$balance <- CalculateBalance(dtaBef = subdta, dtaAfter = dtaAfter, trt = trt.col,
+                                  cols = cols.balance)
+    r$balance_plots <- GetBalancePlots(subdta, c(naive.match$pairs[, 9],
+                                                 naive.match$pairs[, 10]))
+  }
   r$pairs <- naive.match$pairs
-  
   return(r)
 }
 
 
-
 GBMmodel <- function(subdta, trt.col, out.col, caliper, coord.cols,
-                     cols.balance, interaction.depth = 3, seed = 1234) {
+                     cols.balance, interaction.depth = 3, seed = 1234,
+                     matching_algorithm = c('optimal', 'greedy'),
+                     remove_unmatchables = TRUE) {
 
   r <- NULL
   set.seed(seed)
   gbm.ps <- GBMPropScores(subdta, trt.col = trt.col, ignore.cols =
                             c(out.col, which(names(subdta) == 'prop.scores')),
                           interaction.depth = interaction.depth)
-  GBM.match <- PSmatchEst(subdta, pscores = gbm.ps, trt.col = trt.col,
-                          out.col = out.col, SEreturn = TRUE, caliper = caliper,
-                          estimand = 'ATT', pairsRet = TRUE, coord.cols = coord.cols)
-  r$result <- GBM.match$est + GBM.match$SE * 1.96 * c(-1, 0, 1)
-  r$num_match <- dim(GBM.match$pairs)[1]
-  r$distance <- mean(rdist(GBM.match$pairs[, c(3, 4)], GBM.match$pairs[, c(7, 8)]))
-  r$balance <- CalculateBalance(dtaBef = subdta,
-                                dtaAfter = subdta[c(GBM.match$pairs[, 9],
-                                                    GBM.match$pairs[, 10])],
-                                trt = trt.col, cols = cols.balance)
-  r$balance_plots <- GetBalancePlots(subdta, c(GBM.match$pairs[, 9],
-                                               GBM.match$pairs[, 10]))
-  r$pairs <- GBM.match$pairs
   
+  if (matching_algorithm == 'greedy') {
+    GBM.match <- PSmatchEst(subdta, pscores = gbm.ps, trt.col = trt.col,
+                            out.col = out.col, SEreturn = TRUE, caliper = caliper,
+                            estimand = 'ATT', pairsRet = TRUE, coord.cols = coord.cols)
+  } else {
+    GBM.match <- OptPSmatch(subdta, out.col = out.col, trt.col = trt.col,
+                            pscores = gbm.ps, caliper = caliper, SEreturn = TRUE,
+                            pairsRet = TRUE, coord.cols = coord.cols,
+                            remove.unmatchables = remove_unmatchables)
+  }
+  
+  r$result <- GBM.match$est + GBM.match$SE * 1.96 * c(- 1, 0, 1)
+  if (is.null(dim(GBM.match$pairs))) {
+    r$num_match <- 0
+    r$distance <- Inf
+    r$balance <- rep(NA, length(cols.balance))
+  } else {
+    r$num_match <- dim(GBM.match$pairs)[1]
+    r$distance <- rdist(GBM.match$pairs[, c(3, 4)], GBM.match$pairs[, c(7, 8)])
+    r$distance <- mean(r$distance)
+    dtaAfter <- subdta[c(GBM.match$pairs[, 9], GBM.match$pairs[, 10]), ]
+    r$balance <- CalculateBalance(dtaBef = subdta, dtaAfter = dtaAfter, trt = trt.col,
+                                  cols = cols.balance)
+    r$balance_plots <- GetBalancePlots(subdta, c(GBM.match$pairs[, 9],
+                                                 GBM.match$pairs[, 10]))
+  }
+  r$pairs <- GBM.match$pairs
   return(r)
 }
 
 
 DistCalModel <- function(subdta, caliper, dist.caliper, coord.cols, ignore.cols,
-                         trt.col, out.col, cols.balance, coord_dist = TRUE) {
+                         trt.col, out.col, cols.balance, coord_dist = TRUE,
+                         matching_algorithm = c('optimal', 'greedy'),
+                         remove_unmatchables = TRUE) {
 
   r <- NULL
   cal.match <- CaliperEst(dataset = subdta, ps.caliper = caliper,
@@ -81,7 +111,9 @@ DistCalModel <- function(subdta, caliper, dist.caliper, coord.cols, ignore.cols,
                           coords.columns = coord.cols,
                           ignore.cols = ignore.cols.coords,
                           SEreturn = TRUE, pairsRet = TRUE, trt.col = trt.col,
-                          out.col = out.col, coord_dist = coord_dist)
+                          out.col = out.col, coord_dist = coord_dist,
+                          matching_algorithm = matching_algorithm,
+                          remove.unmatchables = remove_unmatchables)
   r$result <- cal.match$est[1] + 1.96 * c(-1, 0, 1) * cal.match$SE[1]
   r$num_match <- dim(cal.match$pairs)[1]
   r$distance <- mean(rdist(cal.match$pairs[, c(3, 4)], cal.match$pairs[, c(7, 8)]))

@@ -51,27 +51,39 @@ UnitToFacility <- function(dat_unit) {
   print('Creating NOx control technologies variables')
   dat_unit = NOxcontroltechnologies(dat_unit)
   dat_unit$NumNOxControls = 0
-  dat_unit$NumNOxControls = apply(dat_unit[, c("SCR", "SNCR", "LowNOxBurner", "OverFire",
-                                               "Ammonia", "CombustMod", "WaterInj", "OtherNOx"),
-                                           with = FALSE], 1, sum, na.rm = TRUE)
+  
+  dat_unit[, idx := seq(nrow(dat_unit))]
+  
+  dat_unit[, SCR := as.numeric(SCR)]
+  dat_unit[, SNCR := as.numeric(SNCR)]
+  dat_unit[, LowNOxBurner := as.numeric(LowNOxBurner)]
+  dat_unit[, OverFire := as.numeric(OverFire)]
+  dat_unit[, Ammonia := as.numeric(Ammonia)]
+  dat_unit[, CombustMod := as.numeric(CombustMod)]
+  dat_unit[, WaterInj := as.numeric(WaterInj)]
+  dat_unit[, OtherNOx := as.numeric(OtherNOx)]
+  
+  dat_unit[, NumNOxControls := sum(SCR, SNCR, LowNOxBurner, OverFire,
+                                   Ammonia, CombustMod, WaterInj, OtherNOx),
+           by = idx]
+  dat_unit[, idx := NULL]
 
-  ## Group SCR and SnCR as one category
-  dat_unit$S_n_CR = apply(dat_unit[, c("SCR", "SNCR"), with = FALSE], 1, any, na.rm = TRUE)
-  
-  
+  # Group SCR and SnCR as one category
+  dat_unit[, S_n_CR := as.numeric(SCR + SNCR >= 1)]
+
   ## -- Define Operating Capacity as the maximum number of hours per month times the
   print('Creating Capacity related variables.')
   # Max Hourly Heat Input Rate
   ## maxopp is the max total number of hours operating time for each of 12 months
-  maxopp = with(dat_unit, tapply(Operating.Time, year_month, max, na.rm = TRUE))
+  maxopp <- with(dat_unit, tapply(Operating.Time, year_month, max, na.rm = TRUE))
   ### Max.Hourly.HI.Rate..MMBtu.hr. is the heat input capacity (MMBtu/hour)
   for (i in 1:length(maxopp))
     dat_unit[year_month == names(maxopp)[i],
              Capacity:= maxopp[i] * Max.Hourly.HI.Rate..MMBtu.hr.] # MMBtu/month.
   
   # Percent Capacity is Heat Input / Capacity
-  dat_unit$PctCapacity = dat_unit$Heat.Input..MMBtu / dat_unit$Capacity
-  with(dat_unit, mean(PctCapacity > 1.5, na.rm = TRUE)) ## No units for Aug 2014
+  dat_unit$PctCapacity <- dat_unit$Heat.Input..MMBtu / dat_unit$Capacity
+  with(dat_unit, mean(PctCapacity > 1.5, na.rm = TRUE))
   dat_unit$PctCapacity[dat_unit$PctCapacity > 1.5] = NA ## > 150 % capacity
   
   
@@ -113,7 +125,7 @@ UnitToFacility <- function(dat_unit) {
   print('Aggregation completed.')
   
   print('Percentage of facilities with pctCapacity > 1.5, set to NA.')
-  print(with(dat_facility, mean(pctCapacity > 1.5, na.rm = TRUE))) # 0 for Aug 2014.
+  print(with(dat_facility, mean(pctCapacity > 1.5, na.rm = TRUE)))
   dat_facility$pctCapacity[dat_facility$pctCapacity > 1.5] = NA ## > 150% capacity
   
   setkeyv(dat_facility, "FacID")
