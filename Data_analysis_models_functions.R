@@ -45,7 +45,8 @@ NaiveModel <- function(subdta, trt.col, out.col, caliper, coord.cols,
     r$balance <- rep(NA, length(cols.balance))
   } else {
     r$num_match <- dim(naive.match$pairs)[1]
-    r$distance <- rdist(naive.match$pairs[, c(3, 4)], naive.match$pairs[, c(7, 8)])
+    r$distance <- rdist.earth(naive.match$pairs[, c(3, 4)], naive.match$pairs[, c(7, 8)])
+    r$distance <- diag(r$distance)
     r$distance <- mean(r$distance)
     dtaAfter <- subdta[c(naive.match$pairs[, 9], naive.match$pairs[, 10]), ]
     r$balance <- CalculateBalance(dtaBef = subdta, dtaAfter = dtaAfter, trt = trt.col,
@@ -87,7 +88,8 @@ GBMmodel <- function(subdta, trt.col, out.col, caliper, coord.cols,
     r$balance <- rep(NA, length(cols.balance))
   } else {
     r$num_match <- dim(GBM.match$pairs)[1]
-    r$distance <- rdist(GBM.match$pairs[, c(3, 4)], GBM.match$pairs[, c(7, 8)])
+    r$distance <- rdist.earth(GBM.match$pairs[, c(3, 4)], GBM.match$pairs[, c(7, 8)])
+    r$distance <- diag(r$distance)
     r$distance <- mean(r$distance)
     dtaAfter <- subdta[c(GBM.match$pairs[, 9], GBM.match$pairs[, 10]), ]
     r$balance <- CalculateBalance(dtaBef = subdta, dtaAfter = dtaAfter, trt = trt.col,
@@ -116,7 +118,8 @@ DistCalModel <- function(subdta, caliper, dist.caliper, coord.cols, ignore.cols,
                           remove.unmatchables = remove_unmatchables)
   r$result <- cal.match$est[1] + 1.96 * c(-1, 0, 1) * cal.match$SE[1]
   r$num_match <- dim(cal.match$pairs)[1]
-  r$distance <- mean(rdist(cal.match$pairs[, c(3, 4)], cal.match$pairs[, c(7, 8)]))
+  D <- rdist.earth(cal.match$pairs[, c(3, 4)], cal.match$pairs[, c(7, 8)])
+  r$distance <- mean(diag(D))
   r$balance <- CalculateBalance(dtaBef = subdta,
                                 dtaAfter = subdta[c(cal.match$pairs[, 9],
                                                     cal.match$pairs[, 10])],

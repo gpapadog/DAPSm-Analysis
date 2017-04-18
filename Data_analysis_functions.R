@@ -61,6 +61,9 @@ CleanData <- function(dataset, plotcor = FALSE) {
   dataset[, totCO2emissions := NULL]
   dataset[, totLoad := NULL]
   dataset[, totHeatInput_narm := NULL]
+  
+  print(paste(round(with(dataset, mean(pctS_n_CR %in% c(0, 1))), 3),
+              'facilities with either all or no heat input from units with SnCR.'))
 
   dataset[, pctCoal := NULL]
   dataset[, pctGas := NULL]

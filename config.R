@@ -34,3 +34,10 @@ within_km <- 100
 # Optimal or greedy matching.
 matching_algorithm <- 'greedy'
 remove_unmatchables <- TRUE
+
+# For the method of Keele et al.
+n_matches <- 1  # Number of matched per treated.
+use_controls <- NULL  # Whether specific controls need to be used
+enforce_constraints <- FALSE
+subset_weight <- 920
+

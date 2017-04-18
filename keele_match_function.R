@@ -1,7 +1,7 @@
 keele_match <- function(dta, trt_col, out_col, coords.columns, exact_covs = NULL,
                         mom_covs = NULL, mom_tols = NULL, near_fine_covs = NULL,
                         near_fine_devs = NULL, subset_weight, true_value = NULL,
-                        pairsRet = FALSE, use_controls = NULL,
+                        pairsRet = FALSE, use_controls = NULL, cols.balance = NULL,
                         enforce_constraints = FALSE, n_matches = 1) {
   
   require(Rcplex)
@@ -49,7 +49,11 @@ keele_match <- function(dta, trt_col, out_col, coords.columns, exact_covs = NULL
     pairs$IDcnt <- c_id
     r$pairs <- as.matrix(pairs[, c(1, 3:6, 8:12, 2, 7)])
     
+    r$distance <- diag(rdist.earth(r$pairs[, c(3, 4)], r$pairs[, c(7, 8)]))
     r$num_match <- dim(r$pairs)[1]
+    r$balance <- CalculateBalance(dtaBef = dta, dtaAfter = matched_data,
+                                  trt = trt_col, cols = cols.balance)
+    
   }
   
   return(r)

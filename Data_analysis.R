@@ -13,6 +13,8 @@ library(DAPSm)
 library(stringr)
 library(arepa)
 library(optmatch)
+library(Rcplex)
+
 
 source(config_path)
 # Setting the working directory.
@@ -103,7 +105,7 @@ subdta <- analysis_dat[, unique(c(trt.col, out.col, coord.cols, conf)), with = F
 # --------- PERFORMING THE ANALYSIS --------- #
 
 # ---  3a. Initializing the analysis.
-set.seed(1234)
+set.seed(1235)
 
 trt.col <- 1
 out.col <- 2
@@ -143,6 +145,7 @@ result[1, ] <- naive.match$result
 num_match[1] <- naive.match$num_match
 distance[1] <- naive.match$distance
 bal[c(1, 6), ] <- naive.match$balance[c(2, 1), ]
+sum(abs(bal[1, ]) > cutoff)
 
 # Fitting GBM
 GBM.match <- GBMmodel(subdta, trt.col, out.col, caliper, coord.cols,
@@ -183,33 +186,49 @@ num_match[4] <- dapsm$num_match
 distance[4] <- dapsm$distance
 bal[4, ] <- dapsm$balance[2, ]
 
+
+# Fitting Keele.
+mom_covs_ind <- c(2, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19)
+exact_covs_ind <- c(6, 20, 21, 22)
+mom_covs <- as.matrix(subdta)[, mom_covs_ind]
+mom_tols <- caliper * apply(mom_covs, 2, sd)
+exact_covs <- as.matrix(subdta)[, exact_covs_ind]
+
+keele <- keele_match(subdta, trt_col = trt.col, out_col = out.col,
+                     coords.columns = coord.cols, subset_weight = subset_weight,
+                     n_matches = n_matches, use_controls = use_controls,
+                     enforce_constraints = enforce_constraints, pairsRet = TRUE,
+                     cols.balance = cols.balance, mom_tols = mom_tols,
+                     mom_covs = mom_covs, exact_covs = exact_covs)
+result[5, ] <- keele$CI
+num_match[5] <- keele$num_match
+distance[5] <- mean(keele$distance)
+bal[5, ] <- keele$balance[2, ]
+
+
+
+
+
+# ----- PART 4. Looking at the results. ------ #
+
+
 # Plotting the standardized difference of means as a function of weight.
 PlotWeightBalance(w_bal$balance, full_data = -5, weights, cutoff, inset = -0.5)
 # Power plant and area-level characteristics separately.
+cov_names <- c('% Operating Capacity', 'ARP Phase 2', '4th Max Temp', '% Urban',
+               '% White', '% Black', '% Hispanic', '% High School',
+               'Household Income', '% Poor', '% Occupied', '% 5-year residents',
+               'House Value', 'Heat Input', 'Population / square mile',
+               'Gas facility', 'Small sized facility', 'Medium sized facility')
+dimnames(w_bal$balance)[[3]] <- cov_names
 PlotWeightBalance(abs(w_bal$balance[, , c(1, 2, 14, 16, 17, 18)]),
-                  full_data = -5, weights, cutoff, axis_cex = 0.6,
-                  mar = c(4, 4, 2, 4))
+                  full_data = -5, weights, cutoff, axis_cex = 0.8,
+                  mar = c(4, 4, 2, 3), leg_cex = 0.7, inset = - 0)
+title(main = 'Power plant characteristics')
 PlotWeightBalance(abs(w_bal$balance[, , - c(1, 2, 14, 16, 17, 18)]),
-                  full_data = -5, weights, cutoff, axis_cex = 0.6,
-                  mar = c(4, 4, 2, 7), inset = -0.35)
-
-
-
-# Fitting Keele.
-n_matches = 1  # Number of matched per treated.
-subset_weight = 100  # Whether all the treated units need to be used
-use_controls = NULL  # Whether specific controls need to be used
-enforce_constraints <- FALSE
-library(Rcplex)
-
-keele <- keele_match(subdta, trt_col = trt_col, out_col = out_col,
-                     coords.columns = coord.cols, subset_weight = subset_weight,
-                     n_matches = n_matches, use_controls = use_controls,
-                     enforce_constraints = enforce_constraints, pairsRet = TRUE)
-result[5, ] <- keele$CI
-num_match[5] <- keele$num_match
-distance[5] <- 
-bal[5, ] <- 
+                  full_data = -5, weights, cutoff, axis_cex = 0.8,
+                  mar = c(4, 4, 2, 3), inset = - 0, leg_cex = 0.7)
+title(main = 'Area level characteristics')
 
 
 # Plotting the results.
@@ -229,10 +248,13 @@ dapsm$weight
 # Plotting maps of the matched pairs
 MatchedDataMap(naive.match$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
                plot.title = 'Naive pairs', point_data = FALSE)
+MatchedDataMap(GBM.match$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
+               plot.title = 'GBM pairs', point_data = FALSE)
 MatchedDataMap(cal.match$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
                plot.title = 'Distance Caliper pairs', point_data = FALSE)
 MatchedDataMap(dapsm$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
                plot.title = 'DAPSm pairs', point_data = FALSE)
-
+MatchedDataMap(keele$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
+               plot.title = 'Keele et al pairs', point_data = FALSE)
 
 
