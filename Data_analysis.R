@@ -188,7 +188,7 @@ bal[4, ] <- dapsm$balance[2, ]
 
 
 # Fitting Keele.
-mom_covs_ind <- c(2, 5, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19)
+mom_covs_ind <- c(5, 7 : 19)
 exact_covs_ind <- c(6, 20, 21, 22)
 mom_covs <- as.matrix(subdta)[, mom_covs_ind]
 mom_tols <- caliper * apply(mom_covs, 2, sd)
@@ -231,10 +231,6 @@ PlotWeightBalance(abs(w_bal$balance[, , - c(1, 2, 14, 16, 17, 18)]),
 title(main = 'Area level characteristics')
 
 
-# Plotting the results.
-PlotResults(result, title = paste(outcome_analysis, paste(month, collapse = ','),
-                                  '/', year))
-
 apply(bal, 1, function(x) c(sum = sum(abs(x) > cutoff),
                             mean = mean(abs(x)),
                             max = max(abs(x))))
@@ -244,6 +240,10 @@ distance
 sum(subdta$SnCR)
 dapsm$weight
 
+
+# Plotting the results.
+PlotResults(result[c(1, 2, 3, 5, 4), ], color = c(rep('grey65', 4), 'grey35'),
+            title = paste(outcome_analysis, paste(month, collapse = ','), '/', year))
 
 # Plotting maps of the matched pairs
 MatchedDataMap(naive.match$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),

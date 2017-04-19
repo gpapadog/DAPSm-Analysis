@@ -144,7 +144,8 @@ ReformData <- function(dataset) {
 
 
 
-PlotResults <- function(result, title = NULL, title.cex = 1, center = FALSE) {
+PlotResults <- function(result, title = NULL, title.cex = 1, center = FALSE,
+                        color = 'grey65') {
   # Function that plots the data analysis results.
   #
   # Args:
@@ -162,9 +163,9 @@ PlotResults <- function(result, title = NULL, title.cex = 1, center = FALSE) {
   result$method <- factor(result$method, levels = result$method)
   
   g <- ggplot(result, aes(x=method, y=Estimate, group=1)) +
-    geom_errorbar(width=.1, aes(ymin = LB, ymax = UB), color = 'grey65',
+    geom_errorbar(width=.1, aes(ymin = LB, ymax = UB), color = color,
                   data = result, cex = 1.5) +
-    geom_point(shape=21, size=3, fill="grey65") +
+    geom_point(shape=21, size=3, fill = color) +
     theme(
       panel.background = element_rect(fill = "grey92",
                                       size = 0.5, linetype = "solid"),
@@ -176,9 +177,9 @@ PlotResults <- function(result, title = NULL, title.cex = 1, center = FALSE) {
     xlab('') +
     theme(panel.border = element_blank()) +
     ggtitle(title) +
-    theme(plot.title = element_text(size = rel(title.cex)),
-          axis.title = element_text(size = rel(1.4)),
-          axis.text = element_text(size = rel(1.4)),
+    theme(plot.title = element_text(size = rel(title.cex), hjust = 0.5),
+          axis.title = element_text(size = rel(1)),
+          axis.text = element_text(size = rel(1)),
           legend.position = 'none')
   if (center) {
     g <- g + ylim(c(- max(abs(result[, 1:3])), max(abs(result[, 1:3]))))
