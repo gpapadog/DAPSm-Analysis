@@ -1,5 +1,3 @@
-# ImputeTS for our data
-
 config_path <- '~/Github/DAPSm-Analysis/config.R'
 
 # Loading libraries.

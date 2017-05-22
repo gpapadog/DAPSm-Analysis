@@ -70,6 +70,7 @@ UnitToFacility <- function(dat_unit) {
 
   # Group SCR and SnCR as one category
   dat_unit[, S_n_CR := as.numeric(SCR + SNCR >= 1)]
+  dat_unit[, hasNOxControl := as.numeric(NumNOxControls > 0)]
 
   ## -- Define Operating Capacity as the maximum number of hours per month times the
   print('Creating Capacity related variables.')
@@ -104,6 +105,9 @@ UnitToFacility <- function(dat_unit) {
                                  S_n_CR_byHI_narm = sum(S_n_CR * Heat.Input..MMBtu., na.rm = TRUE) /
                                    sum(Heat.Input..MMBtu., na.rm = TRUE),
                                  S_n_CR_byHI = sum(S_n_CR * Heat.Input..MMBtu.) /
+                                   sum(Heat.Input..MMBtu., na.rm = TRUE),
+                                 # Percentage of heat input to units with NOx control.
+                                 hasNOxControl_byHI = sum(hasNOxControl * Heat.Input..MMBtu.) /
                                    sum(Heat.Input..MMBtu., na.rm = TRUE),
                                  totOpTime_narm = sum(Operating.Time, na.rm = TRUE),
                                  totOpTime = sum(Operating.Time),
