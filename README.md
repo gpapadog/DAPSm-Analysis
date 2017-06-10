@@ -24,7 +24,7 @@ In order to run the analysis we need two data sets:
 We further need the following R scripts:
 
 1. ```config.R```: The file including the configuration of the analysis.
-1. ```AverageSulfurContent_function.R': Function that calculates the mean of the reported sulfur content.
+1. ```AverageSulfurContent_function.R```: Function that calculates the mean of the reported sulfur content.
 1. ```CaliperEst_function.R```: Function that fits matching in distance calipers.
 1. ```CleanPPunits_function.R```: Dropping some units that were, for example, not operating during the study period.
 1. ```CreateNOxControlsFunction.R```: Function that created the different NOx emission control indicators.
@@ -103,3 +103,9 @@ The main data analysis script is named ```Data_analysis.R```.
 - Open ```Data_analysis.R``` in R/Rstudio
 - Specify the file path where the configuration file is saved as ```config_path```
 - Run the full script
+
+### Reference
+
+Luke Keele, Rocio Titiunik, and Jose Zubizarreta. Enhancing a Geographic Regression
+Discontinuity Design Through Matching to Estimate the Effect of Ballot Initiatives on Voter
+Turnout. Journal of Royal Statistical Society A, 178:223{239, 2015.
