@@ -108,4 +108,4 @@ The main data analysis script is named ```Data_analysis.R```.
 
 Luke Keele, Rocio Titiunik, and Jose Zubizarreta. Enhancing a Geographic Regression
 Discontinuity Design Through Matching to Estimate the Effect of Ballot Initiatives on Voter
-Turnout. Journal of Royal Statistical Society A, 178:223{239, 2015.
+Turnout. Journal of Royal Statistical Society A, 2015.
