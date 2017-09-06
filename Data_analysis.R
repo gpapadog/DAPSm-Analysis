@@ -86,7 +86,7 @@ if (length(wh) > 0) {
 
 analysis_dat <- CleanData(dat, plotcor = FALSE)
 analysis_dat <- ReformData(analysis_dat)
-
+analysis_dat[, hasNOxControl_byHI := NULL]
 
 # ------------------- PART 2------------------- #
 # --------- SETTING UP THE ANALYSIS --------- #
@@ -186,8 +186,8 @@ bal[4, ] <- dapsm$balance[2, ]
 
 
 # Fitting Keele.
-mom_covs_ind <- c(5, 6, 8 : 20)
-exact_covs_ind <- c(7, 21, 22, 23)
+mom_covs_ind <- c(5, 7 : 29)
+exact_covs_ind <- c(6, 20, 21, 22)
 mom_covs <- as.matrix(subdta)[, mom_covs_ind]
 mom_tols <- caliper * apply(mom_covs, 2, sd)
 exact_covs <- as.matrix(subdta)[, exact_covs_ind]
