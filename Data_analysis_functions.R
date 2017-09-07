@@ -6,7 +6,7 @@
 # Update: (7/1/2016) Added function that plots matched pairs on the map.
 # Update: (7/29/2016) Dropping operating time.
 
-CleanData <- function(dataset, plotcor = FALSE) {
+CleanData <- function(dataset, plotcor = FALSE, dropFacID = TRUE) {
   
   dataset[, nmonths := NULL]
   
@@ -47,7 +47,9 @@ CleanData <- function(dataset, plotcor = FALSE) {
   }
 
   # Dropping columns we do not want to include in the analysis.
-  dataset[, FacID := NULL]
+  if (dropFacID) {
+    dataset[, FacID := NULL]
+  }
   dataset[, Fac.FIPS := NULL]
 #  dataset[, totNOxemissions := NULL]
   
