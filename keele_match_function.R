@@ -22,7 +22,7 @@ keele_match <- function(dta, trt_col, out_col, coords.columns, exact_covs = NULL
                              enforce_constraints = enforce_constraints)
   
   t_id <- keele_match$t_id
-  c_id = keele_match$c_id
+  c_id <- keele_match$c_id
   
   matched_data <- dataset[c(t_id, c_id), ]
   names(matched_data)[c(out_col, trt_col)] <- c('Y', 'X')

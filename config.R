@@ -11,13 +11,15 @@ wd <- "~/Github/DAPSm-Analysis/"
 data_dir <- '~/Dropbox/DATAverse/'
 
 # What is the outcome of interest
-outcome_analysis <- 'mean4maxOzone'
+outcome_analysis <- 'totNOxemissions'
 # possible outcome_analysis are:
 # 1. 'mean4maxOzone'
 # 2. 'totNOxemissions'
 
 # Specify the analysis details
 caliper <- 1
+dist_cal <- 0.15
+gbm.caliper <- 0.5
 cutoff <- 0.15
 weights <- seq(0, 1, length.out = 40)  # values of w for the optimal DAPSm scan.
 
