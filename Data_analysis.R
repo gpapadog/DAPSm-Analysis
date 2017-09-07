@@ -186,7 +186,7 @@ bal[4, ] <- dapsm$balance[2, ]
 
 
 # Fitting Keele.
-mom_covs_ind <- c(5, 7 : 29)
+mom_covs_ind <- c(5, 7 : 19)
 exact_covs_ind <- c(6, 20, 21, 22)
 mom_covs <- as.matrix(subdta)[, mom_covs_ind]
 mom_tols <- caliper * apply(mom_covs, 2, sd)
@@ -256,3 +256,5 @@ MatchedDataMap(keele$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
                plot.title = 'Keele et al pairs', point_data = FALSE)
 
 
+DAPSWeightCE(dataset = subdta, out.col = out.col, trt.col = trt.col,
+             weights = weights, pairs = w_bal$pairs, chosen_w = dapsm$weight)
