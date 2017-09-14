@@ -191,7 +191,7 @@ subdta <- subdta[order(subdta$SnCR, decreasing = TRUE), ]
 mom_covs_ind <- c(5, 7 : 19)
 exact_covs_ind <- c(6, 20, 21, 22)
 mom_covs <- as.matrix(subdta)[, mom_covs_ind]
-mom_tols <- caliper * apply(mom_covs, 2, sd)
+mom_tols <- keele_caliper * apply(mom_covs, 2, sd)
 exact_covs <- as.matrix(subdta)[, exact_covs_ind]
 
 keele <- keele_match(subdta, trt_col = trt.col, out_col = out.col,

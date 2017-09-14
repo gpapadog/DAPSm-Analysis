@@ -20,6 +20,7 @@ outcome_analysis <- 'totNOxemissions'
 caliper <- 1
 dist_cal <- 0.15
 gbm.caliper <- 0.5
+keele_caliper <- 0.15
 cutoff <- 0.15
 weights <- seq(0, 1, length.out = 40)  # values of w for the optimal DAPSm scan.
 
