@@ -186,6 +186,8 @@ bal[4, ] <- dapsm$balance[2, ]
 
 
 # Fitting Keele.
+subdta <- subdta[order(subdta$SnCR, decreasing = TRUE), ]
+
 mom_covs_ind <- c(5, 7 : 19)
 exact_covs_ind <- c(6, 20, 21, 22)
 mom_covs <- as.matrix(subdta)[, mom_covs_ind]
