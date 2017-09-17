@@ -187,11 +187,12 @@ bal[4, ] <- dapsm$balance[2, ]
 
 # Fitting Keele.
 subdta <- subdta[order(subdta$SnCR, decreasing = TRUE), ]
+n_trt <- sum(subdta$SnCR)
 
 mom_covs_ind <- c(5, 7 : 19)
 exact_covs_ind <- c(6, 20, 21, 22)
 mom_covs <- as.matrix(subdta)[, mom_covs_ind]
-mom_tols <- keele_caliper * apply(mom_covs, 2, sd)
+mom_tols <- keele_caliper * apply(mom_covs[1 : n_trt, ], 2, sd)
 exact_covs <- as.matrix(subdta)[, exact_covs_ind]
 
 keele <- keele_match(subdta, trt_col = trt.col, out_col = out.col,
@@ -242,7 +243,7 @@ dapsm$weight
 
 
 # Plotting the results.
-PlotResults(result[c(1, 2, 3, 5, 4), ], color = c(rep('grey65', 4), 'grey35'),
+PlotResults(result[c(1, 3, 5, 4), ], color = c(rep('grey65', 3), 'grey35'),
             title = paste(outcome_analysis, paste(month, collapse = ','), '/', year))
 
 # Plotting maps of the matched pairs

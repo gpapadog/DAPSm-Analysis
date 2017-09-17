@@ -11,7 +11,7 @@ wd <- "~/Github/DAPSm-Analysis/"
 data_dir <- '~/Dropbox/DATAverse/'
 
 # What is the outcome of interest
-outcome_analysis <- 'totNOxemissions'
+outcome_analysis <- 'mean4maxOzone'
 # possible outcome_analysis are:
 # 1. 'mean4maxOzone'
 # 2. 'totNOxemissions'
@@ -42,5 +42,5 @@ remove_unmatchables <- TRUE
 n_matches <- 1  # Number of matched per treated.
 use_controls <- NULL  # Whether specific controls need to be used
 enforce_constraints <- FALSE
-subset_weight <- 920
+subset_weight <- 800
 
