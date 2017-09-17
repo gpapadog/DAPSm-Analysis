@@ -18,6 +18,9 @@ outcome_analysis <- 'mean4maxOzone'
 
 # Specify the analysis details
 caliper <- 1
+dist_cal <- 0.15
+gbm.caliper <- 0.5
+keele_caliper <- 0.15
 cutoff <- 0.15
 weights <- seq(0, 1, length.out = 40)  # values of w for the optimal DAPSm scan.
 
@@ -39,5 +42,5 @@ remove_unmatchables <- TRUE
 n_matches <- 1  # Number of matched per treated.
 use_controls <- NULL  # Whether specific controls need to be used
 enforce_constraints <- FALSE
-subset_weight <- 920
+subset_weight <- 800
 

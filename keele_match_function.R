@@ -2,7 +2,7 @@ keele_match <- function(dta, trt_col, out_col, coords.columns, exact_covs = NULL
                         mom_covs = NULL, mom_tols = NULL, near_fine_covs = NULL,
                         near_fine_devs = NULL, subset_weight, true_value = NULL,
                         pairsRet = FALSE, use_controls = NULL, cols.balance = NULL,
-                        enforce_constraints = FALSE, n_matches = 1) {
+                        enforce_constraints = FALSE, n_matches = 1, miles = TRUE) {
   
   require(Rcplex)
   require(fields)
@@ -10,9 +10,11 @@ keele_match <- function(dta, trt_col, out_col, coords.columns, exact_covs = NULL
   dta <- as.data.frame(dta)
   dataset <- dta[order(dta[, trt_col], decreasing = TRUE), ]
   t_ind <- as.numeric(dataset[, trt_col])
+  n_trt <- sum(t_ind)
   coords <- cbind(dataset[, coords.columns])
-  dist_mat <- rdist.earth(coords[t_ind == 1, ], coords[t_ind == 0, ])
-  
+  dist_mat <- rdist.earth(coords[1 : n_trt, ], coords[- c(1 : n_trt), ],
+                          miles = miles)
+
   keele_match <- subsetmatch(dist_mat = dist_mat, t_ind = t_ind,
                              exact_covs = exact_covs, mom_covs = mom_covs,
                              mom_tols = mom_tols, near_fine_covs = near_fine_covs,
@@ -22,7 +24,7 @@ keele_match <- function(dta, trt_col, out_col, coords.columns, exact_covs = NULL
                              enforce_constraints = enforce_constraints)
   
   t_id <- keele_match$t_id
-  c_id = keele_match$c_id
+  c_id <- keele_match$c_id
   
   matched_data <- dataset[c(t_id, c_id), ]
   names(matched_data)[c(out_col, trt_col)] <- c('Y', 'X')
@@ -49,10 +51,13 @@ keele_match <- function(dta, trt_col, out_col, coords.columns, exact_covs = NULL
     pairs$IDcnt <- c_id
     r$pairs <- as.matrix(pairs[, c(1, 3:6, 8:12, 2, 7)])
     
-    r$distance <- diag(rdist.earth(r$pairs[, c(3, 4)], r$pairs[, c(7, 8)]))
-    r$num_match <- dim(r$pairs)[1]
-    r$balance <- CalculateBalance(dtaBef = dta, dtaAfter = matched_data,
+    r$distance <- diag(dist_mat[keele_match$t_id, keele_match$c_id - n_trt])
+    r$num_match <- length(r$distance)
+    r$balance <- CalculateBalance(dtaBef = dataset, dtaAfter = matched_data,
                                   trt = trt_col, cols = cols.balance)
+    r$diff_means <- CalculateBalance(dtaBef = dataset, dtaAfter = matched_data,
+                                     trt = trt_col, cols = cols.balance,
+                                     diff_means = TRUE)
     
   }
   

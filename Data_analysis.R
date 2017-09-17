@@ -103,7 +103,6 @@ subdta <- analysis_dat[, unique(c(trt.col, out.col, coord.cols, conf)), with = F
 # --------- PERFORMING THE ANALYSIS --------- #
 
 # ---  3a. Initializing the analysis.
-set.seed(1235)
 
 trt.col <- 1
 out.col <- 2
@@ -132,6 +131,7 @@ dimnames(bal) <- list(method = c(methods, 'Full-data'),
 
 
 # ----- 3b. Starting the analysis.
+set.seed(1241)
 
 # Fitting the naive.
 naive.match <- NaiveModel(subdta, trt.col = trt.col, out.col = out.col,
@@ -146,7 +146,7 @@ bal[c(1, 6), ] <- naive.match$balance[c(2, 1), ]
 sum(abs(bal[1, ]) > cutoff)
 
 # Fitting GBM
-GBM.match <- GBMmodel(subdta, trt.col, out.col, caliper, coord.cols,
+GBM.match <- GBMmodel(subdta, trt.col, out.col, gbm.caliper, coord.cols,
                       cols.balance = cols.balance, seed = 1234,
                       matching_algorithm = matching_algorithm,
                       remove_unmatchables = remove_unmatchables)
@@ -156,7 +156,7 @@ distance[2] <- GBM.match$distance
 bal[2, ] <- GBM.match$balance[2, ]
 
 # Fitting Distance Caliper
-cal.match <- DistCalModel(subdta, caliper, dist.caliper = 0.2, coord.cols,
+cal.match <- DistCalModel(subdta, caliper, dist.caliper = dist_cal, coord.cols,
                           ignore.cols = ignore.cols.coords, trt.col, out.col,
                           cols.balance = cols.balance, coord_dist = TRUE,
                           matching_algorithm = matching_algorithm,
@@ -186,10 +186,13 @@ bal[4, ] <- dapsm$balance[2, ]
 
 
 # Fitting Keele.
+subdta <- subdta[order(subdta$SnCR, decreasing = TRUE), ]
+n_trt <- sum(subdta$SnCR)
+
 mom_covs_ind <- c(5, 7 : 19)
 exact_covs_ind <- c(6, 20, 21, 22)
 mom_covs <- as.matrix(subdta)[, mom_covs_ind]
-mom_tols <- caliper * apply(mom_covs, 2, sd)
+mom_tols <- keele_caliper * apply(mom_covs[1 : n_trt, ], 2, sd)
 exact_covs <- as.matrix(subdta)[, exact_covs_ind]
 
 keele <- keele_match(subdta, trt_col = trt.col, out_col = out.col,
@@ -240,7 +243,7 @@ dapsm$weight
 
 
 # Plotting the results.
-PlotResults(result[c(1, 2, 3, 5, 4), ], color = c(rep('grey65', 4), 'grey35'),
+PlotResults(result[c(1, 3, 5, 4), ], color = c(rep('grey65', 3), 'grey35'),
             title = paste(outcome_analysis, paste(month, collapse = ','), '/', year))
 
 # Plotting maps of the matched pairs
