@@ -222,13 +222,17 @@ cov_names <- c('% Operating Capacity', 'ARP Phase 2', '4th Max Temp', '% Urban',
                'House Value', 'Heat Input', 'Population / square mile',
                'Gas facility', 'Small sized facility', 'Medium sized facility')
 dimnames(w_bal$balance)[[3]] <- cov_names
+
+cols <- paste0('gray', c(80, 60, 30, 5))
 PlotWeightBalance(abs(w_bal$balance[, , c(1, 2, 14, 16, 17, 18)]),
                   full_data = -5, weights, cutoff, axis_cex = 0.8,
-                  mar = c(4, 4, 2, 3), leg_cex = 0.7, inset = - 0)
+                  mar = c(4, 4, 2, 3), leg_cex = 0.7, inset = - 0,
+                  cols = cols)
 title(main = 'Power plant characteristics')
 PlotWeightBalance(abs(w_bal$balance[, , - c(1, 2, 14, 16, 17, 18)]),
                   full_data = -5, weights, cutoff, axis_cex = 0.8,
-                  mar = c(4, 4, 2, 3), inset = - 0, leg_cex = 0.7)
+                  mar = c(4, 4, 2, 3), inset = - 0, leg_cex = 0.7,
+                  cols = cols)
 title(main = 'Area level characteristics')
 
 
