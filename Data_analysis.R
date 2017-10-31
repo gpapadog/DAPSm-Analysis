@@ -193,7 +193,7 @@ mom_covs_ind <- c(5, 7 : 19)
 exact_covs_ind <- c(6, 20, 21, 22)
 mom_covs <- as.matrix(ordered_subdta)[, mom_covs_ind]
 mom_tols <- keele_caliper * apply(mom_covs[1 : n_trt, ], 2, sd)
-exact_covs <- as.matrix(subdta)[, exact_covs_ind]
+exact_covs <- as.matrix(ordered_subdta)[, exact_covs_ind]
 
 keele <- keele_match(dta = ordered_subdta, trt_col = trt.col, out_col = out.col,
                      coords.columns = coord.cols, subset_weight = subset_weight,
