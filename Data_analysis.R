@@ -186,16 +186,16 @@ bal[4, ] <- dapsm$balance[2, ]
 
 
 # Fitting Keele.
-subdta <- subdta[order(subdta$SnCR, decreasing = TRUE), ]
-n_trt <- sum(subdta$SnCR)
+ordered_subdta <- subdta[order(subdta$SnCR, decreasing = TRUE), ]
+n_trt <- sum(ordered_subdta$SnCR)
 
 mom_covs_ind <- c(5, 7 : 19)
 exact_covs_ind <- c(6, 20, 21, 22)
-mom_covs <- as.matrix(subdta)[, mom_covs_ind]
+mom_covs <- as.matrix(ordered_subdta)[, mom_covs_ind]
 mom_tols <- keele_caliper * apply(mom_covs[1 : n_trt, ], 2, sd)
 exact_covs <- as.matrix(subdta)[, exact_covs_ind]
 
-keele <- keele_match(subdta, trt_col = trt.col, out_col = out.col,
+keele <- keele_match(dta = ordered_subdta, trt_col = trt.col, out_col = out.col,
                      coords.columns = coord.cols, subset_weight = subset_weight,
                      n_matches = n_matches, use_controls = use_controls,
                      enforce_constraints = enforce_constraints, pairsRet = TRUE,
@@ -212,6 +212,9 @@ bal[5, ] <- keele$balance[2, ]
 
 # ----- PART 4. Looking at the results. ------ #
 
+# ---- Looking at the DAPSm results as a function of w.
+DAPSWeightCE(dataset = subdta, out.col = out.col, trt.col = trt.col,
+             weights = weights, pairs = w_bal$pairs, chosen_w = dapsm$weight)
 
 # Plotting the standardized difference of means as a function of weight.
 PlotWeightBalance(w_bal$balance, full_data = -5, weights, cutoff, inset = -0.5)
@@ -262,6 +265,3 @@ MatchedDataMap(dapsm$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
 MatchedDataMap(keele$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
                plot.title = 'Keele et al pairs', point_data = FALSE)
 
-
-DAPSWeightCE(dataset = subdta, out.col = out.col, trt.col = trt.col,
-             weights = weights, pairs = w_bal$pairs, chosen_w = dapsm$weight)

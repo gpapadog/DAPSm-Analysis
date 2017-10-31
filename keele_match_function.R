@@ -10,9 +10,12 @@ keele_match <- function(dta, trt_col, out_col, coords.columns, exact_covs = NULL
 
   distance_measure <- match.arg(distance_measure)
   
-  dta <- as.data.frame(dta)
-  dataset <- dta[order(dta[, trt_col], decreasing = TRUE), ]
-  
+  dataset <- as.data.frame(dta)
+  dataset[, trt_col] <- as.numeric(dataset[, trt_col])
+  if (any(dataset[1 : sum(dataset[, trt_col]), trt_col] != 1)) {
+    stop('dataset not ordered')
+  }
+
   t_ind <- as.numeric(dataset[, trt_col])
   coords <- cbind(dataset[, coords.columns])
   if (distance_measure == 'geo') {
