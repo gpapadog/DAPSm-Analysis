@@ -212,9 +212,6 @@ bal[5, ] <- keele$balance[2, ]
 
 # ----- PART 4. Looking at the results. ------ #
 
-# ---- Looking at the DAPSm results as a function of w.
-DAPSWeightCE(dataset = subdta, out.col = out.col, trt.col = trt.col,
-             weights = weights, pairs = w_bal$pairs, chosen_w = dapsm$weight)
 
 # Plotting the standardized difference of means as a function of weight.
 PlotWeightBalance(w_bal$balance, full_data = -5, weights, cutoff, inset = -0.5)
@@ -264,4 +261,9 @@ MatchedDataMap(dapsm$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
                plot.title = 'DAPSm pairs', point_data = FALSE)
 MatchedDataMap(keele$pairs, trt_coords = c(3, 4), con_coords = c(7, 8),
                plot.title = 'Keele et al pairs', point_data = FALSE)
+
+# ---- Looking at the DAPSm results as a function of w.
+DAPSWeightCE(dataset = subdta, out.col = out.col, trt.col = trt.col,
+             weights = weights, pairs = w_bal$pairs, chosen_w = dapsm$weight)$plot
+
 
