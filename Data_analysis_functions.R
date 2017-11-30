@@ -186,7 +186,7 @@ PlotResults <- function(result, title = NULL, title.cex = 1, center = FALSE,
   if (center) {
     g <- g + ylim(c(- max(abs(result[, 1:3])), max(abs(result[, 1:3]))))
   }
-  print(g)
+  return(g)
 }
 
 
