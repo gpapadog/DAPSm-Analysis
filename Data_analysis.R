@@ -43,6 +43,9 @@ source('Keele_et_al_functions/04_constraintmatrix2.R')
 # ------------------- PART 1------------------- #
 # ------ CREATING THE ANALYSIS DATA SET ------ #
 
+# Lines 51 - 92 should be run for local linkage of power plants and monitors.
+# Alternatively, run the following line, to use the already linked dataset.
+# load(paste0(data_dir, 'analysis_dat.Rdata'))
 
 # ---- STEP 1. Loading unit level data and predicting heat input.
 full_data <- LoadUnitLevelData(data_dir)
@@ -87,6 +90,7 @@ if (length(wh) > 0) {
 analysis_dat <- CleanData(dat, plotcor = FALSE)
 analysis_dat <- ReformData(analysis_dat)
 analysis_dat[, hasNOxControl_byHI := NULL]
+
 
 # ------------------- PART 2------------------- #
 # --------- SETTING UP THE ANALYSIS --------- #
