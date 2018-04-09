@@ -228,6 +228,8 @@ cov_names <- c('% Operating Capacity', 'ARP Phase 2', '4th Max Temp', '% Urban',
 dimnames(w_bal$balance)[[3]] <- cov_names
 
 cols <- paste0('gray', c(80, 60, 30, 5))
+cols <- c('orange1', 'tomato', 'mediumvioletred', 'lightslateblue',
+          'skyblue2', 'midnightblue')
 PlotWeightBalance(abs(w_bal$balance[, , c(1, 2, 14, 16, 17, 18)]),
                   full_data = -5, weights, cutoff, axis_cex = 0.8,
                   mar = c(4, 4, 2, 3), leg_cex = 0.7, inset = - 0,

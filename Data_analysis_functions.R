@@ -147,7 +147,7 @@ ReformData <- function(dataset) {
 
 
 PlotResults <- function(result, title = NULL, title.cex = 1, center = FALSE,
-                        color = 'grey65') {
+                        color = 'grey65', ylab = '') {
   # Function that plots the data analysis results.
   #
   # Args:
@@ -168,15 +168,8 @@ PlotResults <- function(result, title = NULL, title.cex = 1, center = FALSE,
     geom_errorbar(width=.1, aes(ymin = LB, ymax = UB), color = color,
                   data = result, cex = 1.5) +
     geom_point(shape=21, size=3, fill = color) +
-    theme(
-      panel.background = element_rect(fill = "grey92",
-                                      size = 0.5, linetype = "solid"),
-      panel.grid.major = element_line(size = 0.5, linetype = 'solid',
-                                      colour = "white"), 
-      panel.grid.minor = element_line(size = 0.25, linetype = 'solid',
-                                      colour = "white")
-    ) +
-    xlab('') +
+    theme_bw() +
+    xlab('') + ylab(ylab) + 
     theme(panel.border = element_blank()) +
     ggtitle(title) +
     theme(plot.title = element_text(size = rel(title.cex), hjust = 0.5),
